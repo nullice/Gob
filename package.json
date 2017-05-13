@@ -1,0 +1,8 @@
+{
+  "name": "Gob",
+  "version": "0.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/nullice/Gob",
+  "author": "MOONTING-2\\nullice <ui@nullice.com>",
+  "license": "MIT"
+}
