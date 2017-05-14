@@ -1,8 +1,40 @@
 {
   "name": "Gob",
   "version": "0.0.0",
-  "main": "index.js",
+  "main": "./src/Gob.js",
+  "module": "src/Gob.js",
   "repository": "https://github.com/nullice/Gob",
-  "author": "MOONTING-2\\nullice <ui@nullice.com>",
-  "license": "MIT"
+  "author": "nullice <ui@nullice.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "ava": "^0.19.1",
+    "babel-core": "^6.24.1",
+    "babel-loader": "^6.2.5",
+    "babel-plugin-transform-runtime": "^6.22.0",
+    "babel-polyfill": "^6.13.0",
+    "babel-preset-env": "^1.2.1",
+    "coveralls": "^2.13.0",
+    "nyc": "^10.2.0",
+    "rollup": "^0.41.6",
+    "rollup-plugin-babel": "^2.7.1",
+    "webpack": "^2.4.1"
+  },
+  "scripts": {
+    "test": "nyc  ava",
+    "report": "nyc report --reporter=html",
+    "build": "rollup -c",
+    "webpack": "webpack",
+    "webpack-w": "webpack -w"
+  },
+  "ava": {
+    "files": [
+      "./test/*.js"
+    ],
+    "source": [
+      "./src/*.{js,jsx}"
+    ]
+  },
+  "dependencies": {
+    "babel-runtime": "^6.23.0"
+  }
 }
