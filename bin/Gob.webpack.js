@@ -4026,9 +4026,9 @@ Gob.prototype.$_getFilterByKeys = function (fitlerType, keys) {
     }
     var filters = [];
     var hasAsync = false;
-    for (var i = 0; i < keys.length + 2; i++) {
+    for (var i = 0; i < keys.length + 1; i++) {
         var oncefilters = [];
-        var onceKeys = keys.splice(0, keys.length - i);
+        var onceKeys = keys.slice(0, keys.length - i);
         console.info("scan filter:", onceKeys.concat(["__root"]));
         var filtersOb = __WEBPACK_IMPORTED_MODULE_3__lib_Richang_JSEX_objectOBJ_js__["a" /* default */].getObjectValueByNames(tragetFilters, onceKeys.concat(["__root"]));
         for (var x in filtersOb) {
