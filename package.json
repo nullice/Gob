@@ -20,9 +20,12 @@
     "webpack": "^2.4.1"
   },
   "scripts": {
-    "test": "nyc  ava",
+    "test": "ava",
+    "test-w":"ava --watch",
     "report": "nyc report --reporter=html",
-    "build": "rollup -c",
+    "build": "rollup --config rollup.config.js",
+    "rollup-umd-w":"rollup -w --config rollup.config.js",
+    "rollup-es6-w":"rollup -w --config rollup.es6.config.js",
     "webpack": "webpack",
     "webpack-w": "webpack -w"
   },

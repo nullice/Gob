@@ -4,8 +4,104 @@
     <meta charset="UTF-8">
     <title>Gob-sample</title>
     <script src="../bin/Gob.webpack.js"></script>
+    <script src="./vue.js"></script>
+
+    <style>
+        code{
+            font-family: "Adobe Clean";
+        }
+    </style>
 </head>
 <body>
+
+<pre><code>{{Gob|json 4}}</code></pre>
+<div>----</div>
+<div v-for="x in Gob.ds">
+    {{x}}
+</div>
+<script>
+
+    var g = new  GobLib.Gob()
+    g.$newStates({d1:22,ds:22,ob:{d:33}})
+//    g.$newStates({a:{a2:{a3:333},a222:222},b:{b2:{b3:444}}})
+    g.$addFilter("pre","w22",function (oldValue, newValue, keys)
+    {
+        console.log("a filter []")
+        return newValue
+    },[])
+
+    g.$addFilter("pre","0sleep", function (oldValue, newValue, keys)
+    {
+        console.log("0sleep ")
+        return "[slllll]"
+    },[])
+
+    var vue = new Vue({
+
+        el:"body",
+        data:{
+            Gob:g
+        }
+    })
+
+
+    g.d1=3123
+//    g.$newStates({a:{ ss:{},b:{c:123, d:222,a:12344}}})
+
+
+
+
+
+    var Gob = new GobLib.Gob()
+    Gob.$newStates({
+        ui: {
+            windowA: true,
+            windowB: false,
+            toolLen: 23,
+            msg: {
+                a: "ttttt",
+                b: "bbbbb",
+                c: "ccccc"
+            },
+            note: {
+                t1: "t111",
+                t2: "t222"
+            }
+        },
+        user: {title: "isTitle"}
+    })
+
+    //fitlerType, filterName, filterFunction, keyPath, level, isAsync
+    Gob.$addFilter("pre", "addStrAll", function (oldValue, newValue, keys)
+    {
+        return "[root]" + newValue
+    }, [])
+
+    Gob.$addFilter({
+        fitlerType: "pre",
+        filterName: "ui",
+        filterFunction: function (oldValue, newValue, keys)
+        {
+            return "[ui]" + newValue
+        },
+        keyPath:["ui"],
+        level:3
+    })
+
+    Gob.user.title = "newTitle"
+    Gob.ui.toolLen = "555"
+console.log( Gob.ui.toolLen )
+
+
+
+
+
+
+
+
+
+</script>
+
 
 </body>
 </html>
