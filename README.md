@@ -14,6 +14,32 @@ Simple and Intuitive State Management Base Filter.
   [改变动作] -> 前过滤器 -> [状态] -> 终过滤器
 ```
 
+```
+    var Gob = new GOB()
+    
+    //创建状态
+    Gob.$newStates({
+        text: {fontSize: 14}
+    })
+    
+    Gob.text.fontSize = 24; //普通赋值
+    
+    
+    // 添加一个进行异步处理的过滤器
+    Gob.$addFilter("pre", "aAsyncFilter",
+         async function (oldValue, newValue, keys, who)
+         {
+             return await someAsyncProces(newValue)
+         } ,
+         ["text"])
+         
+   await Gob.$setValue(["text", "fontSize"], 32)／／异步赋值（根据键名路径赋值）
+    
+    
+```
+
+
+
 ## 特性
 
 ### KeyPath 键名路径

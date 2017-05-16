@@ -27,7 +27,10 @@ var GobMode_base_init = function ()
 
 }
 
-function pre_range(oldValue, finValue, keys, setterReturnInfo)
+
+
+
+function pre_range(oldValue, finValue, keys, who, setterReturnInfo)
 {
     console.log("f:", keys, finValue)
     var dataRange = Gob.$_getStateModeValueByKeys(keys.concat(["range"]))
@@ -46,7 +49,7 @@ function pre_range(oldValue, finValue, keys, setterReturnInfo)
     return finValue
 }
 
-function pre_type(oldValue, finValue, keys, setterReturnInfo)
+function pre_type(oldValue, finValue, keys, who, setterReturnInfo)
 {
     console.log("f:", keys, finValue)
     var type = this.$_getStateModeValueByKeys(keys.concat(["type"]))

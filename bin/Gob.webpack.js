@@ -10719,7 +10719,7 @@ var GobMode_base_init = function () {
     this.$addFilter("pre", "range", pre_range, [], 10);
 };
 
-function pre_range(oldValue, finValue, keys, setterReturnInfo) {
+function pre_range(oldValue, finValue, keys, who, setterReturnInfo) {
     console.log("f:", keys, finValue);
     var dataRange = Gob.$_getStateModeValueByKeys(keys.concat(["range"]));
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2) {
@@ -10734,7 +10734,7 @@ function pre_range(oldValue, finValue, keys, setterReturnInfo) {
     return finValue;
 }
 
-function pre_type(oldValue, finValue, keys, setterReturnInfo) {
+function pre_type(oldValue, finValue, keys, who, setterReturnInfo) {
     console.log("f:", keys, finValue);
     var type = this.$_getStateModeValueByKeys(keys.concat(["type"]));
     if (type != undefined) {

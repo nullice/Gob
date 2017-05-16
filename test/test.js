@@ -217,7 +217,14 @@ test('执行指令', t =>
 
 test('示例1', t =>
 {
-
+    var Gob = new GOB()
+    Gob.$newStates({
+        text: {fontSize: 14}
+    })
+    Gob.text.fontSize = 24;
+    t.is(Gob.text.fontSize, 24);
+    Gob.$setValue(["text", "fontSize"], 32)
+    t.is(Gob.text.fontSize, 32);
 
 });
 
