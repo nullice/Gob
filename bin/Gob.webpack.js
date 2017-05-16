@@ -3933,7 +3933,6 @@ define(String.prototype, "padRight", "".padEnd);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__lib_Richang_JSEX_typeTYP_js__ = __webpack_require__(149);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__lib_Richang_JSEX_objectOBJ_js__ = __webpack_require__(148);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__modes_GobMode_base_js__ = __webpack_require__(372);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__modes_GobMode_base_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_5__modes_GobMode_base_js__);
 
 
 
@@ -3979,7 +3978,7 @@ var Gob = function () {
     return this;
 };
 
-Gob.prototype.$MODES = { BASE: __WEBPACK_IMPORTED_MODULE_5__modes_GobMode_base_js__["default"] };
+Gob.prototype.$MODES = { BASE: __WEBPACK_IMPORTED_MODULE_5__modes_GobMode_base_js__["a" /* default */] };
 
 /**
  * 添加一个过滤器
@@ -4223,7 +4222,7 @@ Gob.prototype.$getValue = function (keys) {
  * @param onlySet 仅设置值，不触发 fin 过滤器
  * @returns {Promise.<void>}
  */
-Gob.prototype.$setValue = async function (keys, value, onlySet) {
+Gob.prototype.$setValue = async function (keys, value, who, onlySet) {
     var setterReturnInfo = {};
     // console.log("$setValue", keys, value)
     //0. 计数
@@ -4237,9 +4236,9 @@ Gob.prototype.$setValue = async function (keys, value, onlySet) {
 
     // 2. 改变状态
     if (filtersOb.hasAsync) {
-        var change = await setObjectValueByKeysAsync(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this);
+        var change = await setObjectValueByKeysAsync(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this, who);
     } else {
-        var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this);
+        var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this, who);
     }
 
     // var change =   OBJ.setObjectValueByNames(this.$_states, keys, value)
@@ -4262,13 +4261,13 @@ Gob.prototype.$setValue = async function (keys, value, onlySet) {
     if (finFiltersOb.hasAsync) {
         for (var i = 0; i < finFiltersOb.filters.length; i++) {
             if (typeof finFiltersOb.filters[0].func === "function") {
-                await finFiltersOb.filters[0].func, call(this, change.oldValue, change.newValue, change.change, keys, setterReturnInfo);
+                await finFiltersOb.filters[0].func, call(this, change.oldValue, change.newValue, change.change, keys, who, setterReturnInfo);
             }
         }
     } else {
         for (var i = 0; i < finFiltersOb.filters.length; i++) {
             if (typeof finFiltersOb.filters[0].func === "function") {
-                finFiltersOb.filters[0].func.call(this, change.oldValue, change.newValue, change.change, keys, setterReturnInfo);
+                finFiltersOb.filters[0].func.call(this, change.oldValue, change.newValue, change.change, keys, who, setterReturnInfo);
             }
         }
     }
@@ -4407,13 +4406,13 @@ function setterCreators(keys, self) {
  * @param value
  * @returns {boolean}
  */
-async function setObjectValueByKeysAsync(object, keys, value, preFilters, setterReturnInfo, self) {
+async function setObjectValueByKeysAsync(object, keys, value, preFilters, setterReturnInfo, self, who) {
     var nowObject;
     var change = false;
 
     if (keys.length == 1) {
         var oldValue = object[keys[0]];
-        value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self);
+        value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
         change = checkChange(oldValue, value);
         object[keys[0]] = value;
         return change;
@@ -4439,7 +4438,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
                 }
                 nowObject = object[keys[0]];
                 var oldValue = nowObject[keys[1]];
-                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[1]] = value;
                 return change;
@@ -4449,7 +4448,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
                 }
                 nowObject = nowObject[keys[i]];
                 var oldValue = nowObject[keys[i + 1]];
-                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[i + 1]] = value;
                 return change;
@@ -4459,13 +4458,13 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
     return change;
 }
 
-function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo, self) {
+function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo, self, who) {
     var nowObject;
     var change = false;
 
     if (keys.length == 1) {
         var oldValue = object[keys[0]];
-        value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self);
+        value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
         change = checkChange(oldValue, value);
         object[keys[0]] = value;
         return change;
@@ -4491,7 +4490,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
                 }
                 nowObject = object[keys[0]];
                 var oldValue = nowObject[keys[1]];
-                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[1]] = value;
                 return change;
@@ -4501,7 +4500,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
                 }
                 nowObject = nowObject[keys[i]];
                 var oldValue = nowObject[keys[i + 1]];
-                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[i + 1]] = value;
                 return change;
@@ -4517,14 +4516,14 @@ function checkChange(oldValue, newValue) {
         return { change: true, oldValue: oldValue, newValue: newValue };
     }
 }
-async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterReturnInfo, self) {
+async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterReturnInfo, self, who) {
     var finValue = newValue;
     // console.log("finValue", finValue)
     if (preFilters != undefined && preFilters.length != undefined) {
         try {
             for (var i = 0; i < preFilters.length; i++) {
                 if (typeof preFilters[i].func === "function") {
-                    finValue = await preFilters[i].func.call(self, oldValue, finValue, keys, setterReturnInfo);
+                    finValue = await preFilters[i].func.call(self, oldValue, finValue, keys, who, setterReturnInfo);
                 }
             }
         } catch (e) {
@@ -4533,13 +4532,13 @@ async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterR
     }
     return finValue;
 }
-function valuePreFilter(oldValue, newValue, keys, preFilters, setterReturnInfo, self) {
+function valuePreFilter(oldValue, newValue, keys, preFilters, setterReturnInfo, self, who) {
     var finValue = newValue;
     if (preFilters != undefined && preFilters.length != undefined) {
         try {
             for (var i = 0; i < preFilters.length; i++) {
                 if (typeof preFilters[i].func === "function") {
-                    finValue = preFilters[i].func.call(self, oldValue, finValue, keys, setterReturnInfo);
+                    finValue = preFilters[i].func.call(self, oldValue, finValue, keys, who, setterReturnInfo);
                 }
             }
         } catch (e) {
@@ -10691,10 +10690,78 @@ module.exports = function stringify(it){ // eslint-disable-line no-unused-vars
 
 /***/ }),
 /* 372 */
-/***/ (function(module, __webpack_exports__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-throw new Error("Module build failed: SyntaxError: C:/Users/nullice/MyProject/Gob/src/modes/GobMode-base.js: Unexpected token (68:20)\n\n\u001b[0m \u001b[90m 66 | \u001b[39m                    {\n \u001b[90m 67 | \u001b[39m                        re \u001b[33m=\u001b[39m    \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 68 | \u001b[39m                    }\n \u001b[90m    | \u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 69 | \u001b[39m\n \u001b[90m 70 | \u001b[39m                    \u001b[36mvar\u001b[39m finValue \u001b[33m=\u001b[39m re[\u001b[35m0\u001b[39m]\n \u001b[90m 71 | \u001b[39m                    finValue\u001b[0m\n");
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__lib_Richang_JSEX_typeTYP_js__ = __webpack_require__(149);
+/**
+ * Created by nullice on 2017/5/16.
+ */
+
+
+
+var data = {
+    text: {
+        fontFamily: { type: "string", default: "微软雅黑" },
+        colorHex: { type: "string", default: "#ffe" },
+        color: {
+            r: { type: "number", default: 244, range: [0, 255] },
+            g: { type: "number", default: 244, range: [0, 255] },
+            b: { type: "number", default: 244, range: [0, 255] }
+        },
+        fontSize: { type: "number", default: 32, range: [12, 72] }
+    }
+};
+
+var GobMode_base_init = function () {
+    this.$mode = "base";
+    this.$addFilter("pre", "type", pre_type, [], 9);
+    this.$addFilter("pre", "range", pre_range, [], 10);
+};
+
+function pre_range(oldValue, finValue, keys, setterReturnInfo) {
+    console.log("f:", keys, finValue);
+    var dataRange = Gob.$_getStateModeValueByKeys(keys.concat(["range"]));
+    if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2) {
+        if (finValue > dataRange[1]) {
+            finValue = dataRange[1];
+        }
+
+        if (finValue < dataRange[0]) {
+            finValue = dataRange[0];
+        }
+    }
+    return finValue;
+}
+
+function pre_type(oldValue, finValue, keys, setterReturnInfo) {
+    console.log("f:", keys, finValue);
+    var type = this.$_getStateModeValueByKeys(keys.concat(["type"]));
+    if (type != undefined) {
+        var finValueType = __WEBPACK_IMPORTED_MODULE_0__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(finValue);
+        if (finValueType !== type) {
+            if (type === "number") {
+                if (finValueType === "string") {
+                    var reg = /(-){0,1}[0-9]+/;
+                    var re = reg.exec(finValue);
+                    if (re != undefined) {
+                        var finValue = Number(re[0]);
+                        if (finValue !== NaN) {
+                            return finValue;
+                        }
+                    }
+                }
+            } else type === "striing";
+            {
+                return "" + finValue;
+            }
+        }
+    }
+
+    return oldValue;
+}
+
+/* harmony default export */ __webpack_exports__["a"] = (GobMode_base_init);
 
 /***/ })
 /******/ ]);

@@ -331,15 +331,23 @@ function pre_type(oldValue, finValue, keys, setterReturnInfo)
         {
             if (type === "number")
             {
-                if(finValueType==="string")
+                if (finValueType === "string")
                 {
-                    finValue ="sda -sadf -123";
-                    var reg =/(-){0,1}[0-9]+/;
-                    var finValue = reg.exec(finValue)[0];
-                    finValue;
+                    var reg = /(-){0,1}[0-9]+/;
+                    var re = reg.exec(finValue);
+                    if (re != undefined)
+                    {
+                        var finValue = Number(re[0]);
+                        if (finValue !== NaN)
+                        {
+                            return finValue
+                        }
+
+                    }
                 }
-
-
+            } else (type === "striing");
+            {
+                return "" + finValue
             }
 
         }
@@ -347,7 +355,7 @@ function pre_type(oldValue, finValue, keys, setterReturnInfo)
 
     }
 
-    return finValue
+    return oldValue
 }
 
 /**
@@ -697,7 +705,7 @@ Gob$1.prototype.$getValue = function (keys)
  * @param onlySet 仅设置值，不触发 fin 过滤器
  * @returns {Promise.<void>}
  */
-Gob$1.prototype.$setValue = async function (keys, value, onlySet)
+Gob$1.prototype.$setValue = async function (keys, value, who, onlySet)
 {
     var setterReturnInfo = {};
     // console.log("$setValue", keys, value)
@@ -714,10 +722,10 @@ Gob$1.prototype.$setValue = async function (keys, value, onlySet)
     // 2. 改变状态
     if (filtersOb.hasAsync)
     {
-        var change = await setObjectValueByKeysAsync(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this);
+        var change = await setObjectValueByKeysAsync(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this, who);
     } else
     {
-        var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this);
+        var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this, who);
     }
 
     // var change =   OBJ.setObjectValueByNames(this.$_states, keys, value)
@@ -745,7 +753,7 @@ Gob$1.prototype.$setValue = async function (keys, value, onlySet)
         {
             if (typeof  finFiltersOb.filters[0].func === "function")
             {
-                await  finFiltersOb.filters[0].func, call(this, change.oldValue, change.newValue, change.change, keys, setterReturnInfo);
+                await  finFiltersOb.filters[0].func, call(this, change.oldValue, change.newValue, change.change, keys,who, setterReturnInfo);
             }
         }
     } else
@@ -754,7 +762,7 @@ Gob$1.prototype.$setValue = async function (keys, value, onlySet)
         {
             if (typeof  finFiltersOb.filters[0].func === "function")
             {
-                finFiltersOb.filters[0].func.call(this, change.oldValue, change.newValue, change.change, keys, setterReturnInfo);
+                finFiltersOb.filters[0].func.call(this, change.oldValue, change.newValue, change.change, keys,who, setterReturnInfo);
             }
         }
     }
@@ -925,7 +933,7 @@ function setterCreators(keys, self)
  * @param value
  * @returns {boolean}
  */
-async function setObjectValueByKeysAsync(object, keys, value, preFilters, setterReturnInfo, self)
+async function setObjectValueByKeysAsync(object, keys, value, preFilters, setterReturnInfo, self,who)
 {
     var nowObject;
     var change = false;
@@ -933,7 +941,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
     if (keys.length == 1)
     {
         var oldValue = object[keys[0]];
-        value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self);
+        value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self,who);
         change = checkChange(oldValue, value);
         object[keys[0]] = value;
         return change
@@ -969,7 +977,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
                 }
                 nowObject = object[keys[0]];
                 var oldValue = nowObject[keys[1]];
-                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self,who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[1]] = value;
                 return change
@@ -983,7 +991,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
                 }
                 nowObject = nowObject[keys[i]];
                 var oldValue = nowObject[keys[i + 1]];
-                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self,who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[i + 1]] = value;
                 return change
@@ -994,7 +1002,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
     return change
 }
 
-function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo, self)
+function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo, self,who)
 {
     var nowObject;
     var change = false;
@@ -1002,7 +1010,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
     if (keys.length == 1)
     {
         var oldValue = object[keys[0]];
-        value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self);
+        value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self,who);
         change = checkChange(oldValue, value);
         object[keys[0]] = value;
         return change
@@ -1038,7 +1046,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
                 }
                 nowObject = object[keys[0]];
                 var oldValue = nowObject[keys[1]];
-                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self,who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[1]] = value;
                 return change
@@ -1051,7 +1059,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
                 }
                 nowObject = nowObject[keys[i]];
                 var oldValue = nowObject[keys[i + 1]];
-                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self);
+                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self,who);
                 change = checkChange(oldValue, value);
                 nowObject[keys[i + 1]] = value;
                 return change
@@ -1070,7 +1078,7 @@ function checkChange(oldValue, newValue)
         return {change: true, oldValue: oldValue, newValue: newValue}
     }
 }
-async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterReturnInfo, self)
+async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterReturnInfo, self,who)
 {
     var finValue = newValue;
     // console.log("finValue", finValue)
@@ -1082,7 +1090,7 @@ async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterR
             {
                 if (typeof preFilters[i].func === "function")
                 {
-                    finValue = await preFilters[i].func.call(self, oldValue, finValue, keys, setterReturnInfo);
+                    finValue = await preFilters[i].func.call(self, oldValue, finValue, keys,who, setterReturnInfo);
                 }
             }
         } catch (e)
@@ -1092,7 +1100,7 @@ async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterR
     }
     return finValue
 }
-function valuePreFilter(oldValue, newValue, keys, preFilters, setterReturnInfo, self)
+function valuePreFilter(oldValue, newValue, keys, preFilters, setterReturnInfo, self,who)
 {
     var finValue = newValue;
     if (preFilters != undefined && preFilters.length != undefined)
@@ -1103,7 +1111,7 @@ function valuePreFilter(oldValue, newValue, keys, preFilters, setterReturnInfo, 
             {
                 if (typeof preFilters[i].func === "function")
                 {
-                    finValue = preFilters[i].func.call(self, oldValue, finValue, keys, setterReturnInfo);
+                    finValue = preFilters[i].func.call(self, oldValue, finValue, keys,who, setterReturnInfo);
                 }
 
             }

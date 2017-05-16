@@ -57,21 +57,23 @@ function pre_type(oldValue, finValue, keys, setterReturnInfo)
         {
             if (type === "number")
             {
-                if(finValueType==="string")
+                if (finValueType === "string")
                 {
-                    finValue ="sda -sadf -123"
-                    var reg =/(-){0,1}[0-9]+/
+                    var reg = /(-){0,1}[0-9]+/
                     var re = reg.exec(finValue)
-                    if(  re!= undefined)
+                    if (re != undefined)
                     {
-                        re =    
+                        var finValue = Number(re[0])
+                        if (finValue !== NaN)
+                        {
+                            return finValue
+                        }
+
                     }
-
-                    var finValue = re[0]
-                    finValue
                 }
-
-
+            } else (type === "striing")
+            {
+                return "" + finValue
             }
 
         }
