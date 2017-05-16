@@ -22,9 +22,10 @@ Simple and Intuitive State Management Base Filter.
         text: {fontSize: 14}
     })
     
-    Gob.text.fontSize = 24; //普通赋值
+    //普通赋值
+    Gob.text.fontSize = 24; 
     
-    
+   
     // 添加一个进行异步处理的过滤器
     Gob.$addFilter("pre", "aAsyncFilter",
          async function (oldValue, newValue, keys, who)
@@ -33,7 +34,8 @@ Simple and Intuitive State Management Base Filter.
          } ,
          ["text"])
          
-   await Gob.$setValue(["text", "fontSize"], 32)／／异步赋值（根据键名路径）
+   //异步赋值（根据键名路径）
+   await Gob.$setValue(["text", "fontSize"], 32)
     
     
 ```
