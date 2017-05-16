@@ -7,7 +7,7 @@
     <script src="./vue.js"></script>
 
     <style>
-        code{
+        code {
             font-family: "Adobe Clean";
         }
     </style>
@@ -21,82 +21,112 @@
 </div>
 <script>
 
-    var g = new  GobLib.Gob()
-    g.$newStates({d1:22,ds:22,ob:{d:33}})
-//    g.$newStates({a:{a2:{a3:333},a222:222},b:{b2:{b3:444}}})
-    g.$addFilter("pre","w22",function (oldValue, newValue, keys)
-    {
-        console.log("a filter []")
-        return newValue
-    },[])
+    var GOB = GobLib.Gob
+    var g = new GobLib.Gob()
+    g.$newStates({d1: 22, ds: 22, ob2: {d2: "ddd", ob22: {d: 3324}}, ob: {d: 33}})
 
-    g.$addFilter("pre","0sleep", function (oldValue, newValue, keys)
-    {
-        console.log("0sleep ")
-        return "[slllll]"
-    },[])
+    //    g.$newStates({a:{a2:{a3:333},a222:222},b:{b2:{b3:444}}})
+    //    g.$addFilter("pre","w22",function (oldValue, newValue, keys)
+    //    {
+    //        console.log("a filter []")
+    //        return newValue
+    //    },[])
+    //
+    //    g.$addFilter("pre","0sleep", function (oldValue, newValue, keys)
+    //    {
+    //        console.log("0sleep ")
+    //        return "[slllll]"
+    //    },[])
 
     var vue = new Vue({
 
-        el:"body",
-        data:{
-            Gob:g
+        el: "body",
+        data: {
+            Gob: g
         }
     })
 
-
-    g.d1=3123
-//    g.$newStates({a:{ ss:{},b:{c:123, d:222,a:12344}}})
-
-
-
-
-
-    var Gob = new GobLib.Gob()
-    Gob.$newStates({
-        ui: {
-            windowA: true,
-            windowB: false,
-            toolLen: 23,
-            msg: {
-                a: "ttttt",
-                b: "bbbbb",
-                c: "ccccc"
-            },
-            note: {
-                t1: "t111",
-                t2: "t222"
-            }
-        },
-        user: {title: "isTitle"}
-    })
-
-    //fitlerType, filterName, filterFunction, keyPath, level, isAsync
-    Gob.$addFilter("pre", "addStrAll", function (oldValue, newValue, keys)
+    console.log("----")
+    for (var x in g)
     {
-        return "[root]" + newValue
-    }, [])
+        console.log(x)
+    }
+    console.log("----")
+    g.$newStates(["a", "b", "c"], 200)
+    //    g.$newStates({a:{ ss:{},b:{c:123, d:222,a:12344}}})
 
-    Gob.$addFilter({
-        fitlerType: "pre",
-        filterName: "addStrUi",
-        filterFunction: function (oldValue, newValue, keys)
+
+    function a()
+    {
+        var Gob = new GobLib.Gob()
+        Gob.$newStates({
+            ui: {
+                windowA: true,
+                windowB: false,
+                toolLen: 23,
+                msg: {
+                    a: "ttttt",
+                    b: "bbbbb",
+                    c: "ccccc"
+                },
+                note: {
+                    t1: "t111",
+                    t2: "t222"
+                }
+            },
+            user: {title: "isTitle"}
+        })
+
+        //fitlerType, filterName, filterFunction, keyPath, level, isAsync
+        Gob.$addFilter("pre", "addStrAll", function (oldValue, newValue, keys)
         {
-            return "[ui]" + newValue
-        },
-        keyPath:["ui"],
-        level:3
-    })
+            return "[root]" + newValue
+        }, [])
 
-    Gob.user.title = "newTitle"
-    Gob.ui.toolLen = "555"
-console.log( Gob.ui.toolLen )
+        Gob.$addFilter({
+            fitlerType: "pre",
+            filterName: "addStrUi",
+            filterFunction: function (oldValue, newValue, keys)
+            {
+                return "[ui]" + newValue
+            },
+            keyPath: ["ui"],
+            level: 3
+        })
+
+        Gob.user.title = "newTitle"
+        Gob.ui.toolLen = "555"
+        console.log(Gob.ui.toolLen)
+
+    }
 
 
+    var Gob = new GOB()
+
+    var data = {
+        text: {
+            fontFamily: {type: "string", default: "微软雅黑"},
+            colorHex: {type: "string", default: "#ffe"},
+            color: {
+                r: {type: "number", default: 244, range: [0, 255]},
+                g: {type: "number", default: 244, range: [0, 255]},
+                b: {type: "number", default: 244, range: [0, 255]},
+            },
+            fontSize: {type: "number", default: 32, range: [12, 72]},
+        }
+    }
+
+    console.log("----")
 
 
+    Gob.$use(Gob.$MODES.BASE)
 
+    Gob.$newStates(data)
 
+    console.log(Gob.$_states)
+    Gob.text.color.r = 333
+    console.log(" Gob.text.color.r", Gob.text.color.r)
+    //    Gob.$newStates(states)
 
 
 

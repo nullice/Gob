@@ -54,9 +54,37 @@ test('设置属性', t =>
 });
 
 
+test('设置新属性', t =>
+{
+    var Gob = new GOB()
+    Gob.$newStates({
+        a: {
+            a2: {a3: 333},
+            a222: 222
+        }, a222: 222,
+        b: {b2: {b3: 444}}
+    })
+
+    Gob.$newStates({
+        a: {
+            a2: {a3aa: 666},
+        }
+    })
+
+    t.is(Gob.a.a2.a3aa, 666);
+    Gob.a.a2.a3aa = 445
+    t.is(Gob.a.a2.a3aa, 445);
+
+    Gob.$newStates(["a", "b", "c"], 999)
+
+    t.is(Gob.a.b.c, 999);
+
+
+});
+
+
 test('同步过滤器', t =>
 {
-
     var Gob = new GOB()
     Gob.$newStates({
         ui: {
@@ -84,13 +112,17 @@ test('同步过滤器', t =>
 
     Gob.$addFilter({
         fitlerType: "pre",
-        filterName: "keepType",
+        filterName: "getLength",
         filterFunction: function (oldValue, newValue, keys)
         {
-            return oldValue.constructor(newValue)
+            if (keys[keys.length - 1] === "toolLen")
+            {
+                return newValue.length
+            }
+            return newValue
         },
         keyPath: ["ui"],
-        level: 3
+        level: 8
     })
 
     Gob.$addFilter({
@@ -98,18 +130,95 @@ test('同步过滤器', t =>
         filterName: "ui",
         filterFunction: function (oldValue, newValue, keys)
         {
+
             return "[ui]" + newValue
         },
-        keyPath:["ui"],
-        level:3
+        keyPath: ["ui"],
+        level: 99
     })
+
+    var DD1 = 0
+    Gob.$addFilter({
+        fitlerType: "fin",
+        filterName: "ui",
+        filterFunction: function (oldValue, newValue, keys)
+        {
+
+            return "[ui]" + newValue
+        },
+        keyPath: ["ui"],
+        level: 99
+    })
+
+    Gob.ui.msg.a = "aaa"
+    t.is(Gob.ui.msg.a, "[ui][root]aaa");
 
     Gob.user.title = "newTitle"
     t.is(Gob.user.title, "[root]newTitle");
 
-
     Gob.ui.toolLen = "555"
-    t.is(Gob.ui.toolLen, 555);
+    t.is(Gob.ui.toolLen, "[ui][root]666".length);
+});
+
+
+test('异步过滤器', t =>
+{
+    var Gob = new GOB()
+    Gob.$newStates({
+        ui: {
+            windowA: true,
+            windowB: false,
+            toolLen: 23,
+            msg: {
+                a: "ttttt",
+                b: "bbbbb",
+                c: "ccccc"
+            },
+            note: {
+                t1: "t111",
+                t2: "t222"
+            }
+        },
+        user: {title: "isTitle"}
+    })
+    //fitlerType, filterName, filterFunction, keyPath, level, isAsync
+    Gob.$addFilter("pre", "addStrAll", async function (oldValue, newValue, keys)
+    {
+        return "[async]" + newValue
+    }, [])
+
+
+    Gob.ui.msg.a = "aaa"
+    t.is(Gob.ui.msg.a, "ttttt");
+
+    setTimeout(() =>
+    {
+        t.is(Gob.ui.msg.a, "aaa");
+    })
+
+});
+
+
+test('执行指令', t =>
+{
+    var Gob = new GOB()
+    var ordersJson = "[{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"d1\\\"],\\\"value\\\":22}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ds\\\"],\\\"value\\\":22}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ob2\\\",\\\"d2\\\"],\\\"value\\\":\\\"ddd\\\"}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ob2\\\",\\\"ob22\\\",\\\"d\\\"],\\\"value\\\":3324}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ob\\\",\\\"d\\\"],\\\"value\\\":33}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"a\\\",\\\"b\\\",\\\"c\\\"],\\\"value\\\":200}\"}]";
+    var orders = JSON.parse(ordersJson)
+    Gob.$exec(orders)
+    t.is(Gob.ob2.d2, "ddd");
+    t.is(Gob.ob2.ob22.d, 3324);
+    Gob.$exec({order: "new", info: {keyPath: ["tt", "tt2", "sd22"], value: 3322}})
+    t.is(Gob.tt.tt2.sd22, 3322);
+    Gob.tt.tt2.sd22 = "ddd"
+    t.is(Gob.tt.tt2.sd22, "ddd");
+
+});
+
+
+test('示例1', t =>
+{
+
+
 });
 
 
