@@ -23,7 +23,7 @@ Simple and Intuitive State Management Base Filter.
  Gob 的核心思想是
 > - 状态获取（取值）应该是静态（没有行为）的
 > - 状态改变（赋值）应该是动态（可以有行为）的
-> - 状态改变的过程应该是可精确记录的
+> - 状态改变的过程应该是可追溯来源并精确记录的
 
 
 ```js
@@ -58,6 +58,9 @@ Simple and Intuitive State Management Base Filter.
           //用 await 保证改变 Gob.text.fontFamily 时，Gob.text.fontSize 已经被改变了
           await Gob.$setValue(["text", "fontFamily"], "Helvetica")
     }
+
+
+
     
 ```
 
@@ -95,7 +98,8 @@ Simple and Intuitive State Management Base Filter.
 
 ### 过滤器
 Gob 的核心思想就是通过滤器来处理状态改变时的所有逻辑。
-当一个新值要改变状态时，比如一句赋值语句： `Gob.text.fontSize =16`，或者一个指令方法：`Gob.$setValue(["text", "fontSize"], 16)`,都可以触发一个或多个过滤器，过滤器是串联的，新值在过滤器中处理并传递到下一个过滤器。
+当一个新值要改变状态时，比如一句赋值语句： `Gob.text.fontSize = 16`，或者一个指令方法：`Gob.$setValue(["text", "fontSize"], 16)`,都可以触发一个或多个过滤器，过滤器是串联的，新值在过滤器中处理并传递到下一个过滤器。
+过滤器可以知道当前处理的是哪一个状态(通过键名路径如：`["text", "fontSize"]`)、新值、旧值、是谁发起状态改变，以进行相应处理。
 
 #### 过滤器路由
 状态改变不会触发所有的过滤器，一个状态改变过程要触发哪些过滤器，由目标状态的键名路径来决定，过滤器有自己“键名路径属性”，例如过滤器的“键名路径属性”是 `["text"]`，它就能匹配所有 `["text"]` 开头的状态，比如`["text", "fontSize"]`、`["text", "lineMax"]`
@@ -133,7 +137,8 @@ Gob 的核心思想就是通过滤器来处理状态改变时的所有逻辑。
 
 ### 模式 mode
 
-模式就是一系列过滤器与状态格式的组合，
+模式就是一系列状态行为（过滤器）与状态描述（描述属性）的组合。
+状态的原型可以拥有一些额外的描述属性，比如下面这里的 `type`, `range` 就是状态的描述属性，当状态改版时，过滤器可以根据状态的描述属性来对其进行处理，比如状态改变时新值的类型与这个状态的描述属性`type`　不同，
 ```js
 
  var states ={
@@ -147,6 +152,15 @@ Gob 的核心思想就是通过滤器来处理状态改变时的所有逻辑。
         },
     }
 }
+    //应用模式
+    Gob.$use(Gob.$MODES.BASE)
+    
+    //创建状态，在拥有模式的情况下，状态会被处理，
+    Gob.$newStates(states)
+
+
+
+    console.log(Gob.$_states)
 
 
 ```
