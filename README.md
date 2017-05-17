@@ -71,7 +71,6 @@ Simple and Intuitive State Management Base Filter.
         }
     */
 ```
-
 #### 键名路径的格式
 - 数组：`["ui","test","fontSize"]`
 - 字符串 点分隔符：`"ui.test.fontSize"`
