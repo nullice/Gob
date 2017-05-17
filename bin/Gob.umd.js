@@ -245,22 +245,15 @@ var GobMode_base_init = function () {
 };
 
 function pre_range(oldValue, finValue, keys, who, setterReturnInfo) {
-    console.log("f:", keys, finValue);
-    var dataRange = Gob.$_getStateModeValueByKeys(keys.concat(["range"]));
+    var dataRange = this.$_getStateModeValueByKeys(keys.concat(["range"]));
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2) {
-        if (finValue > dataRange[1]) {
-            finValue = dataRange[1];
-        }
-
-        if (finValue < dataRange[0]) {
-            finValue = dataRange[0];
-        }
+        if (finValue > dataRange[1]) finValue = dataRange[1];
+        if (finValue < dataRange[0]) finValue = dataRange[0];
     }
     return finValue;
 }
 
 function pre_type(oldValue, finValue, keys, who, setterReturnInfo) {
-    console.log("f:", keys, finValue);
     var type = this.$_getStateModeValueByKeys(keys.concat(["type"]));
     if (type != undefined) {
         var finValueType = typeTYP.type(finValue);
@@ -282,7 +275,6 @@ function pre_type(oldValue, finValue, keys, who, setterReturnInfo) {
             }
         }
     }
-
     return oldValue;
 }
 
@@ -383,7 +375,7 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 const _clonedeep = require("./../node_modules/lodash.clonedeep");
 
-var Gob$1 = function () {
+var Gob = function () {
     this.$isGob = true;
     /*set 调用次数*/
     this.$_setCount = 0;
@@ -417,7 +409,7 @@ var Gob$1 = function () {
     return this;
 };
 
-Gob$1.prototype.$MODES = { BASE: GobMode_base_init };
+Gob.prototype.$MODES = { BASE: GobMode_base_init };
 
 /**
  * 添加一个过滤器
@@ -428,7 +420,7 @@ Gob$1.prototype.$MODES = { BASE: GobMode_base_init };
  * @param level  执行顺序级别
  * @param isAsync 是否是异步函数
  */
-Gob$1.prototype.$addFilter = function (fitlerType, filterName, filterFunction, keyPath, level, isAsync) {
+Gob.prototype.$addFilter = function (fitlerType, filterName, filterFunction, keyPath, level, isAsync) {
     if (arguments.length == 1 && typeTYP.type(arguments[0]) === "object") {
         try {
             var fitlerType = arguments[0].fitlerType;
@@ -473,7 +465,7 @@ Gob$1.prototype.$addFilter = function (fitlerType, filterName, filterFunction, k
  * @param filterName
  * @param keyPath
  */
-Gob$1.prototype.$removeFilter = function (fitlerType, filterName, keyPath) {
+Gob.prototype.$removeFilter = function (fitlerType, filterName, keyPath) {
     if (arguments.length == 1 && typeTYP.type(arguments[0]) === "object") {
         try {
             var fitlerType = arguments[0].fitlerType;
@@ -508,7 +500,7 @@ Gob$1.prototype.$removeFilter = function (fitlerType, filterName, keyPath) {
  * @param level
  * @param isAsync
  */
-Gob$1.prototype.$addPreFilter = function (filterName, filterFunction, keyPath, level, isAsync) {
+Gob.prototype.$addPreFilter = function (filterName, filterFunction, keyPath, level, isAsync) {
 
     if (arguments.length == 1 && typeTYP.type(arguments[0]) === "object") {
         this.$addFilter(arguments[0]);
@@ -525,7 +517,7 @@ Gob$1.prototype.$addPreFilter = function (filterName, filterFunction, keyPath, l
  * @param level
  * @param isAsync
  */
-Gob$1.prototype.$addFinFilter = function (filterName, filterFunction, keyPath, level, isAsync) {
+Gob.prototype.$addFinFilter = function (filterName, filterFunction, keyPath, level, isAsync) {
 
     if (arguments.length == 1 && typeTYP.type(arguments[0]) === "object") {
         this.$addFilter(arguments[0]);
@@ -540,7 +532,7 @@ Gob$1.prototype.$addFinFilter = function (filterName, filterFunction, keyPath, l
  * @param keys
  * @returns {{hasAsync: boolean, filters: Array}}
  */
-Gob$1.prototype.$_getFilterByKeys = function (fitlerType, keys) {
+Gob.prototype.$_getFilterByKeys = function (fitlerType, keys) {
     var keys = keys.slice(0);
     if (fitlerType === "pre") {
         var tragetFilters = this.$fitlers.preFilters;
@@ -586,7 +578,7 @@ Gob$1.prototype.$_getFilterByKeys = function (fitlerType, keys) {
  * @param setInfo {keyPath, value,onlySet}
  * @returns {*}
  */
-Gob$1.prototype.$execSet = (() => {
+Gob.prototype.$execSet = (() => {
     var _ref = _asyncToGenerator(function* (setInfo) {
         if (setInfo != undefined && setInfo.keyPath != undefined) {
             var keys = keyPathToKeys(setInfo.keyPath);
@@ -609,7 +601,7 @@ Gob$1.prototype.$execSet = (() => {
  * 执行一个取值命令
  * @param keyPath
  */
-Gob$1.prototype.$execGet = function (keyPath) {
+Gob.prototype.$execGet = function (keyPath) {
     if (keyPath) {
         var keys = keyPathToKeys(keyPath);
         return this.$getValue(keys);
@@ -620,7 +612,7 @@ Gob$1.prototype.$execGet = function (keyPath) {
  * 执行一个指令或指令集
  * @param Order
  */
-Gob$1.prototype.$exec = function (order) {
+Gob.prototype.$exec = function (order) {
     if (typeTYP.type(order) === "array") {
         var orders = order;
     } else {
@@ -654,7 +646,7 @@ Gob$1.prototype.$exec = function (order) {
  * @param keys 键名列表
  * @returns {Promise.<*>}
  */
-Gob$1.prototype.$getValue = function (keyPath) {
+Gob.prototype.$getValue = function (keyPath) {
     // console.log("$getValue", keys, value)
     var keys = keyPathToKeys(keyPath);
     var value = objectOBJ.getObjectValueByNames(this.$_states, keys);
@@ -668,7 +660,7 @@ Gob$1.prototype.$getValue = function (keyPath) {
  * @param onlySet 仅设置值，不触发 fin 过滤器
  * @returns {Promise.<void>}
  */
-Gob$1.prototype.$setValue = (() => {
+Gob.prototype.$setValue = (() => {
     var _ref2 = _asyncToGenerator(function* (keyPath, value, who, onlySet) {
         var setterReturnInfo = {};
         var keys = keyPathToKeys(keyPath);
@@ -735,7 +727,7 @@ Gob$1.prototype.$setValue = (() => {
  * @param object
  * @param value
  */
-Gob$1.prototype.$newStates = function (object, value, who) {
+Gob.prototype.$newStates = function (object, value, who) {
     if (this.$mode !== "normal" && this.$mode != undefined) {
         console.log("$_applyModeState(object)", object);
 
@@ -759,17 +751,17 @@ Gob$1.prototype.$newStates = function (object, value, who) {
  * 把 ModeState 状态模型数据应用到实例上
  * @param object
  */
-Gob$1.prototype.$_applyModeState = function (object) {
+Gob.prototype.$_applyModeState = function (object) {
     var ob = createModeStates(object);
     this.$newStates(ob.states);
     this.$_modeData = ob.modeData;
 };
 
-Gob$1.prototype.$_getStateModeValueByKeys = function (keys) {
+Gob.prototype.$_getStateModeValueByKeys = function (keys) {
     return objectOBJ.getObjectValueByNames(this.$_modeData, keys);
 };
 
-Gob$1.prototype.$use = function (initFunc) {
+Gob.prototype.$use = function (initFunc) {
     initFunc.apply(this);
 };
 
@@ -989,7 +981,7 @@ function createModeStates(data) {
 }
 
 //-----------------------------------------------------------
-Gob$1.prototype.sleep = (() => {
+Gob.prototype.sleep = (() => {
     var _ref5 = _asyncToGenerator(function* (ms) {
         return new Promise(function (resolve, reject) {
             setTimeout(() => {
@@ -1003,7 +995,7 @@ Gob$1.prototype.sleep = (() => {
     };
 })();
 
-Gob$1.prototype.doAsync = _asyncToGenerator(function* () {
+Gob.prototype.doAsync = _asyncToGenerator(function* () {
     console.log("ssss1");
     var a = yield this.sleep();
     console.log("ssss2", a);
@@ -1011,22 +1003,22 @@ Gob$1.prototype.doAsync = _asyncToGenerator(function* () {
 
 var propertySetting = { writable: false, enumerable: false };
 
-Object.defineProperty(Gob$1.prototype, "$newStates", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$setValue", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$getValue", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$exec", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$execSet", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$execGet", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$_getFilterByKeys", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$addFilter", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$addFilter", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$removeFilter", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$addFinFilter", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$addPreFilter", propertySetting);
-Object.defineProperty(Gob$1.prototype, "doAsync", propertySetting);
-Object.defineProperty(Gob$1.prototype, "sleep", propertySetting);
-Object.defineProperty(Gob$1.prototype, "$modes", propertySetting);
+Object.defineProperty(Gob.prototype, "$newStates", propertySetting);
+Object.defineProperty(Gob.prototype, "$setValue", propertySetting);
+Object.defineProperty(Gob.prototype, "$getValue", propertySetting);
+Object.defineProperty(Gob.prototype, "$exec", propertySetting);
+Object.defineProperty(Gob.prototype, "$execSet", propertySetting);
+Object.defineProperty(Gob.prototype, "$execGet", propertySetting);
+Object.defineProperty(Gob.prototype, "$_getFilterByKeys", propertySetting);
+Object.defineProperty(Gob.prototype, "$addFilter", propertySetting);
+Object.defineProperty(Gob.prototype, "$addFilter", propertySetting);
+Object.defineProperty(Gob.prototype, "$removeFilter", propertySetting);
+Object.defineProperty(Gob.prototype, "$addFinFilter", propertySetting);
+Object.defineProperty(Gob.prototype, "$addPreFilter", propertySetting);
+Object.defineProperty(Gob.prototype, "doAsync", propertySetting);
+Object.defineProperty(Gob.prototype, "sleep", propertySetting);
+Object.defineProperty(Gob.prototype, "$modes", propertySetting);
 
-return Gob$1;
+return Gob;
 
 })));

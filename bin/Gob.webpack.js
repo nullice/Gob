@@ -4920,22 +4920,15 @@ var GobMode_base_init = function () {
 };
 
 function pre_range(oldValue, finValue, keys, who, setterReturnInfo) {
-    console.log("f:", keys, finValue);
-    var dataRange = Gob.$_getStateModeValueByKeys(keys.concat(["range"]));
+    var dataRange = this.$_getStateModeValueByKeys(keys.concat(["range"]));
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2) {
-        if (finValue > dataRange[1]) {
-            finValue = dataRange[1];
-        }
-
-        if (finValue < dataRange[0]) {
-            finValue = dataRange[0];
-        }
+        if (finValue > dataRange[1]) finValue = dataRange[1];
+        if (finValue < dataRange[0]) finValue = dataRange[0];
     }
     return finValue;
 }
 
 function pre_type(oldValue, finValue, keys, who, setterReturnInfo) {
-    console.log("f:", keys, finValue);
     var type = this.$_getStateModeValueByKeys(keys.concat(["type"]));
     if (type != undefined) {
         var finValueType = __WEBPACK_IMPORTED_MODULE_0__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(finValue);
@@ -4957,7 +4950,6 @@ function pre_type(oldValue, finValue, keys, who, setterReturnInfo) {
             }
         }
     }
-
     return oldValue;
 }
 
