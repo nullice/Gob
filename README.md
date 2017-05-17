@@ -17,13 +17,13 @@ Simple and Intuitive State Management Base Filter.
   <img  src ="https://github.com/nullice/Gob/raw/master/logo/过滤器示例.png" />
 </p>
 
-它是 Photoshop 扩展 [UI-DNA](https://github.com/nullice/UI-DNA) 中解耦出的库，在 UI-DNA 中状态改变常常需要是一个异步的过程，例如修改一个字体属性，需要等待 Photoshop 中渲染完成后，状态改变才算完成，否则你就无法控制多个状态改变时的顺序，同时还需要对状态改变前对新状态进行处理或者触发一些别的行为。这就需要一个状态与状态行为进行管理的工具，这就是 Gob。
+它是 Photoshop 扩展 [UI-DNA](https://github.com/nullice/UI-DNA) 中解耦出的库，在 UI-DNA 中状态改变常常需要是一个异步的过程，例如修改一个字体属性，需要等待 Photoshop 中渲染完成后，状态改变才算完成，否则你就无法控制多个状态改变时的顺序，同时还需要对状态改变前对新状态进行处理或者触发一些别的行为。这就需要一个对状态与状态行为进行管理的工具，这就是 Gob。
 
 
  Gob 的核心思想是
-- 状态获取（取值）应该是静态（没有行为）的
-- 状态改变（赋值）应该是动态（可以有行为）的
-- 状态改变的过程应该是可精确记录的
+> - 状态获取（取值）应该是静态（没有行为）的
+> - 状态改变（赋值）应该是动态（可以有行为）的
+> - 状态改变的过程应该是可精确记录的
 
 
 ```js
