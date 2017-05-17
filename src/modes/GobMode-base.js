@@ -30,6 +30,7 @@ var GobMode_base_init = function ()
 
 function pre_range(oldValue, finValue, keys, who, setterReturnInfo)
 {
+    // console.log("pre_range",oldValue, finValue, keys, who, setterReturnInfo)
     var dataRange = this.$_getStateModeValueByKeys(keys.concat(["range"]))
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2)
     {

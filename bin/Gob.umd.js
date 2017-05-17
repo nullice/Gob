@@ -245,6 +245,7 @@ var GobMode_base_init = function () {
 };
 
 function pre_range(oldValue, finValue, keys, who, setterReturnInfo) {
+    // console.log("pre_range",oldValue, finValue, keys, who, setterReturnInfo)
     var dataRange = this.$_getStateModeValueByKeys(keys.concat(["range"]));
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2) {
         if (finValue > dataRange[1]) finValue = dataRange[1];
@@ -483,7 +484,7 @@ Gob.prototype.$removeFilter = function (fitlerType, filterName, keyPath) {
         var tragetFilters = this.$fitlers.finFilters;
     }
 
-    var __root = objectOBJ.getObjectValueByNames(tragetFilters, keys.concat(["__root"]));
+    var __root = getObjectValueByKeys(tragetFilters, keys.concat(["__root"]));
 
     if (typeof __root === "object") {
         if (__root[filterName] != undefined) {
@@ -545,7 +546,7 @@ Gob.prototype.$_getFilterByKeys = function (fitlerType, keys) {
         var oncefilters = [];
         var onceKeys = keys.slice(0, keys.length - i);
         // console.info("scan filter:", onceKeys.concat(["__root"]))
-        var filtersOb = objectOBJ.getObjectValueByNames(tragetFilters, onceKeys.concat(["__root"]));
+        var filtersOb = getObjectValueByKeys(tragetFilters, onceKeys.concat(["__root"]));
         for (var x in filtersOb) {
             if (filtersOb[x].isAsync) {
                 hasAsync = true;
@@ -647,10 +648,9 @@ Gob.prototype.$exec = function (order) {
  * @returns {Promise.<*>}
  */
 Gob.prototype.$getValue = function (keyPath) {
-    // console.log("$getValue", keys, value)
+    // console.log("$getValue", keyPath)
     var keys = keyPathToKeys(keyPath);
-    var value = objectOBJ.getObjectValueByNames(this.$_states, keys);
-    return value;
+    return getObjectValueByKeys(this.$_states, keys);
 };
 
 /**
@@ -728,12 +728,13 @@ Gob.prototype.$setValue = (() => {
  * @param value
  */
 Gob.prototype.$newStates = function (object, value, who) {
+
     if (this.$mode !== "normal" && this.$mode != undefined) {
         console.log("$_applyModeState(object)", object);
 
         var ob = createModeStates(object);
         this.$_modeData = ob.modeData;
-        object = ob.states;
+        var object = ob.states;
     }
 
     if (typeTYP.type(object) === "array" && arguments.length >= 2) {
@@ -758,7 +759,7 @@ Gob.prototype.$_applyModeState = function (object) {
 };
 
 Gob.prototype.$_getStateModeValueByKeys = function (keys) {
-    return objectOBJ.getObjectValueByNames(this.$_modeData, keys);
+    return getObjectValueByKeys(this.$_modeData, keys);
 };
 
 Gob.prototype.$use = function (initFunc) {
@@ -773,7 +774,7 @@ Gob.prototype.$use = function (initFunc) {
  * @param index
  * @param self
  */
-function giveSetter(object, keys, index, self, gob, who) {
+function giveSetter(object, keys, index, self, itr, who) {
     for (var key in object) {
         var newKeys = keys.concat(key);
         var isObject = false;
@@ -781,14 +782,15 @@ function giveSetter(object, keys, index, self, gob, who) {
             isObject = typeTYP.type(object[key]) === "object";
         }
         if (isObject && objectOBJ.isEmptyObject(object[key]) !== true) {
-            if (typeof gob[key] !== "object") {
-                gob[key] = {};
+            if (typeof itr[key] !== "object") {
+                itr[key] = {};
             }
 
-            giveSetter(object[key], newKeys.slice(0), index + 1, self, gob[key], who);
+            giveSetter(object[key], newKeys.slice(0), index + 1, self, itr[key], who);
         } else {
 
-            Object.defineProperty(gob, key, setterCreators(newKeys.slice(0), self));
+            // console.log("defineProperty", key, itr)
+            Object.defineProperty(itr, key, setterCreators(newKeys.slice(0), self));
             objectOBJ.setObjectValueByNames(self.$_states, newKeys, object[key]);
             if (self.$enalbeLog) /*记录*/
                 {
@@ -842,7 +844,8 @@ function setterCreators(keys, self) {
     var ob = {
         set: setter,
         get: getter,
-        enumerable: true
+        enumerable: true,
+        configurable: true
     };
     return ob;
 }
@@ -980,7 +983,26 @@ function createModeStates(data) {
     }
 }
 
+function getObjectValueByKeys(object, keys, aheadEndTime) {
+
+    var itr = object;
+    var finTime = keys.length - (aheadEndTime || 0);
+    for (var i = 0; i < finTime; i++) {
+        if (i === finTime - 1) {
+            return itr[keys[i]];
+        }
+
+        if (itr[keys[i]] != undefined) {
+            itr = itr[keys[i]];
+        } else {
+            return null;
+        }
+    }
+}
+
 //-----------------------------------------------------------
+
+
 Gob.prototype.sleep = (() => {
     var _ref5 = _asyncToGenerator(function* (ms) {
         return new Promise(function (resolve, reject) {

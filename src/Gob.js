@@ -138,7 +138,7 @@ Gob.prototype.$removeFilter = function (fitlerType, filterName, keyPath)
         var tragetFilters = this.$fitlers.finFilters
     }
 
-    var __root = OBJ.getObjectValueByNames(tragetFilters, keys.concat(["__root"]))
+    var __root = getObjectValueByKeys(tragetFilters, keys.concat(["__root"]))
 
     if (typeof __root === "object")
     {
@@ -215,7 +215,7 @@ Gob.prototype.$_getFilterByKeys = function (fitlerType, keys)
         var oncefilters = []
         var onceKeys = keys.slice(0, keys.length - i)
         // console.info("scan filter:", onceKeys.concat(["__root"]))
-        var filtersOb = OBJ.getObjectValueByNames(tragetFilters, onceKeys.concat(["__root"]))
+        var filtersOb = getObjectValueByKeys(tragetFilters, onceKeys.concat(["__root"]))
         for (var x in filtersOb)
         {
             if (filtersOb[x].isAsync)
@@ -337,10 +337,9 @@ Gob.prototype.$exec = function (order)
  */
 Gob.prototype.$getValue = function (keyPath)
 {
-    // console.log("$getValue", keys, value)
+    // console.log("$getValue", keyPath)
     var keys = keyPathToKeys(keyPath)
-    var value = OBJ.getObjectValueByNames(this.$_states, keys);
-    return value
+    return getObjectValueByKeys(this.$_states, keys);
 }
 
 
@@ -426,13 +425,14 @@ Gob.prototype.$setValue = async function (keyPath, value, who, onlySet)
  */
 Gob.prototype.$newStates = function (object, value, who)
 {
+
     if (this.$mode !== "normal" && this.$mode != undefined)
     {
         console.log("$_applyModeState(object)", object)
 
         var ob = createModeStates(object)
         this.$_modeData = ob.modeData
-        object = ob.states
+        var object = ob.states
     }
 
 
@@ -464,7 +464,7 @@ Gob.prototype.$_applyModeState = function (object)
 
 Gob.prototype.$_getStateModeValueByKeys = function (keys)
 {
-    return OBJ.getObjectValueByNames(this.$_modeData, keys)
+    return getObjectValueByKeys(this.$_modeData, keys)
 }
 
 Gob.prototype.$use = function (initFunc)
@@ -481,7 +481,7 @@ Gob.prototype.$use = function (initFunc)
  * @param index
  * @param self
  */
-function giveSetter(object, keys, index, self, gob, who)
+function giveSetter(object, keys, index, self, itr, who)
 {
     for (var key in object)
     {
@@ -493,16 +493,17 @@ function giveSetter(object, keys, index, self, gob, who)
         }
         if (isObject && OBJ.isEmptyObject(object[key]) !== true)
         {
-            if (typeof  gob[key] !== "object")
+            if (typeof  itr[key] !== "object")
             {
-                gob[key] = {}
+                itr[key] = {}
             }
 
-            giveSetter(object[key], newKeys.slice(0), index + 1, self, gob[key], who)
+            giveSetter(object[key], newKeys.slice(0), index + 1, self, itr[key], who)
         } else
         {
 
-            Object.defineProperty(gob, key, setterCreators(newKeys.slice(0), self));
+            // console.log("defineProperty", key, itr)
+            Object.defineProperty(itr, key, setterCreators(newKeys.slice(0), self));
             OBJ.setObjectValueByNames(self.$_states, newKeys, object[key])
             if (self.$enalbeLog)/*记录*/
             {
@@ -572,6 +573,7 @@ function setterCreators(keys, self)
         set: setter,
         get: getter,
         enumerable: true,
+        configurable: true
     }
     return ob;
 }
@@ -851,8 +853,34 @@ function createModeStates(data)
     }
 }
 
+function getObjectValueByKeys(object, keys, aheadEndTime)
+    {
+
+        var itr = object
+        var finTime = (keys.length - (aheadEndTime || 0))
+        for (var i = 0; i < finTime; i++)
+        {
+            if (i === finTime - 1)
+            {
+                return itr[keys[i]]
+            }
+
+            if (itr[keys[i]] != undefined)
+            {
+                itr = itr[keys[i]];
+            }
+            else
+            {
+                return null
+            }
+
+        }
+    }
+
 
 //-----------------------------------------------------------
+
+
 Gob.prototype.sleep = async function (ms)
 {
     return new Promise(function (resolve, reject)
