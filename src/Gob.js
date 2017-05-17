@@ -335,9 +335,10 @@ Gob.prototype.$exec = function (order)
  * @param keys 键名列表
  * @returns {Promise.<*>}
  */
-Gob.prototype.$getValue = function (keys)
+Gob.prototype.$getValue = function (keyPath)
 {
     // console.log("$getValue", keys, value)
+    var keys = keyPathToKeys(keyPath)
     var value = OBJ.getObjectValueByNames(this.$_states, keys);
     return value
 }
@@ -350,19 +351,20 @@ Gob.prototype.$getValue = function (keys)
  * @param onlySet 仅设置值，不触发 fin 过滤器
  * @returns {Promise.<void>}
  */
-Gob.prototype.$setValue = async function (keys, value, who, onlySet)
+Gob.prototype.$setValue = async function (keyPath, value, who, onlySet)
 {
     var setterReturnInfo = {}
+    var keys = keyPathToKeys(keyPath)
+
     // console.log("$setValue", keys, value)
     //0. 计数
     this.$_setCount++;
 
-
+    var keys = keyPathToKeys(keyPath)
     // 1. 获取匹配的 preFilter 前过滤器
     var filtersOb = this.$_getFilterByKeys("pre", keys)
     // console.log("$setValue filtersOb", keys, filtersOb)
     // console.log("hasAsync keys", keys, filtersOb.hasAsync)
-
 
     // 2. 改变状态
     if (filtersOb.hasAsync)

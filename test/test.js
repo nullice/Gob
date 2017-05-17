@@ -51,6 +51,15 @@ test('设置属性', t =>
     t.is(Gob.a222.value, 222);
     t.is(Gob.b.b2.b3, 223322);
     t.is(Gob.a.a2.a3, "ssss");
+    Gob.$setValue("a.a2.a3",2312)
+    t.is(Gob.a.a2.a3, 2312);
+    Gob.$setValue("a/a2/a3",23)
+    t.is(Gob.a.a2.a3, 23);
+    Gob.$setValue("a\\a2\\a3",55)
+    t.is(Gob.a.a2.a3, 55);
+
+
+
 });
 
 

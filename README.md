@@ -57,13 +57,13 @@ Simple and Intuitive State Management Base Filter.
 这些好处对于过滤器来说很重要，当状态改变时，在过滤器中能通过键名路径明确知道是哪个状态被改变，以此进行相应的处理。
 
 ```js
-    //使用键名路径来赋值取值：
+    //使用键名路径来改变和获取状态：
     Gob.$setValue(["text", "fontSize"], 32)
     Gob.$getValue(["text", "fontSize"]) //32
 
-
     //使用普通的赋值来改变状态时，键名路径也可以被记录下来：
     Gob.text.fontSize = 32
+
     /*  被记录下来的状态改变指令：
         {
             order:"set", who:undefined,
@@ -72,7 +72,10 @@ Simple and Intuitive State Management Base Filter.
     */
 ```
 
-
+#### 键名路径的格式
+- 数组：`["ui","test","fontSize"]`
+- 字符串 点分隔符：`"ui.test.fontSize"`
+- 字符串 斜杠分隔符：`"ui/test/fontSize"`
 
 ### 异步的状态
 ```js
