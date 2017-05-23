@@ -197,6 +197,7 @@ var objectOBJ = {
                     nowObject = object[names[0]];
 
                     nowObject[names[1]] = value
+                    // Vue.set(nowObject,names[1],value)
                     return
 
                 }
@@ -209,6 +210,7 @@ var objectOBJ = {
 
                     nowObject = nowObject[names[i]];
                     nowObject[names[i + 1]] = value
+                    // Vue.set(nowObject,names[i + 1],value)
                     return
                 }
 

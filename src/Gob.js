@@ -5,7 +5,8 @@
 
 import  TYP from "./lib/Richang_JSEX/typeTYP.js"
 import  OBJ from "./lib/Richang_JSEX/objectOBJ.js"
-import  GobMode_base from "./modes/GobMode-base.js"
+import  GobMode_Base from "./modes/GobMode-Base.js"
+import  GobMode_VueSupport from "./modes/GobMode-VueSupport.js"
 const _clonedeep = require("./../node_modules/lodash.clonedeep")
 
 var Gob = function ()
@@ -19,33 +20,51 @@ var Gob = function ()
     this.$_states = {};
     /*模式数据存储*/
     this.$_modeData = {}
+    /*可供模式自由存放普通属性的对象*/
+    this.$_setting = {}
     /*状态改变记录*/
-    this.$enalbeLog = true
-    this.$_log = [];
+    this.$enalbeLog = false
+    this.$_onlyRecFinValue = false
+    this.$_logs = [];
+    this.$_lastKeyPath = null;
     /*模式*/
     this.$mode = "normal";
+
     this.$fitlers = {
         preFilters: {__root: {}},
         finFilters: {__root: {}},
     };
+    this.$hooks = {
+        newState: null,
+        USURP_newStateObject: null,
+    }
 
+    this.$util = {
+        getObjectValueByKeys: getObjectValueByKeys,
+        deleteObjectValueByKeys: deleteObjectValueByKeys
+
+    }
 
     Object.defineProperty(this, "$fitlers", {enumerable: false});
     Object.defineProperty(this, "$mode", {enumerable: false});
     Object.defineProperty(this, "$isGob", {enumerable: false});
     Object.defineProperty(this, "$_modeData", {enumerable: false});
     Object.defineProperty(this, "$enalbeLog", {enumerable: false});
-    Object.defineProperty(this, "$_log", {enumerable: false});
+    Object.defineProperty(this, "$_setting", {enumerable: false});
+    Object.defineProperty(this, "$_logs", {enumerable: false});
+    Object.defineProperty(this, "$_lastKeyPath", {enumerable: false});
     Object.defineProperty(this, "$_setCount", {enumerable: false});
     Object.defineProperty(this, "$_changeCount", {enumerable: false});
     Object.defineProperty(this, "$_states", {enumerable: false});
+    Object.defineProperty(this, "$hooks", {enumerable: false});
+    Object.defineProperty(this, "$util", {enumerable: false});
 
 
     var self = this
     return this;
 }
 
-Gob.prototype.$MODES = {BASE: GobMode_base};
+Gob.prototype.$MODES = {BASE: GobMode_Base, VUE_SUPPORT: GobMode_VueSupport};
 
 
 /**
@@ -255,7 +274,7 @@ Gob.prototype.$_getFilterByKeys = function (fitlerType, keys)
  * @param setInfo {keyPath, value,onlySet}
  * @returns {*}
  */
-Gob.prototype.$execSet = async function (setInfo)
+Gob.prototype.$execSet = async function (setInfo, who)
 {
     if (setInfo != undefined && setInfo.keyPath != undefined)
     {
@@ -268,7 +287,7 @@ Gob.prototype.$execSet = async function (setInfo)
         {
             var onlySet = false
         }
-        await this.$setValue(keys, setInfo.value, onlySet)
+        await this.$setValue(keys, setInfo.value, who, onlySet)
     }
 }
 
@@ -284,6 +303,17 @@ Gob.prototype.$execGet = function (keyPath)
         return this.$getValue(keys)
     }
 }
+
+
+Gob.prototype.$execUpdate = function (updateInfo, who)
+{
+    if (updateInfo != undefined && updateInfo.keyPath != undefined)
+    {
+        var keys = keyPathToKeys(updateInfo.keyPath)
+        this.$updateValue(keys, updateInfo.value, who)
+    }
+}
+
 
 /**
  * 执行一个指令或指令集
@@ -320,10 +350,15 @@ Gob.prototype.$exec = function (order)
 
             if (orders[i].order === "new")
             {
-                this.$newStates(keyPathToKeys(info.keyPath), info.value)
-            } else if (orders[i].order === "set")
+                this.$newStates(keyPathToKeys(info.keyPath), info.value, order.who)
+            }
+            else if (orders[i].order === "set")
             {
-                this.$execSet(info)
+                this.$execSet(info, order.who)
+            }
+            else if (orders[i].order === "update")
+            {
+                this.$execUpdate(info, order.who)
             }
         }
     }
@@ -339,6 +374,7 @@ Gob.prototype.$getValue = function (keyPath)
 {
     // console.log("$getValue", keyPath)
     var keys = keyPathToKeys(keyPath)
+    this.$_lastLog = {order: "get", info: {keyPath: keys}}
     return getObjectValueByKeys(this.$_states, keys);
 }
 
@@ -352,7 +388,7 @@ Gob.prototype.$getValue = function (keyPath)
  */
 Gob.prototype.$setValue = async function (keyPath, value, who, onlySet)
 {
-    var setterReturnInfo = {}
+    var filterRope = {}
     var keys = keyPathToKeys(keyPath)
 
     // console.log("$setValue", keys, value)
@@ -365,32 +401,41 @@ Gob.prototype.$setValue = async function (keyPath, value, who, onlySet)
     // console.log("$setValue filtersOb", keys, filtersOb)
     // console.log("hasAsync keys", keys, filtersOb.hasAsync)
 
+
+    // 1. 记录 keyPath
+    this.$_lastKeyPath = keys
+    /*logs 记录指令 */
+    if (this.$enalbeLog)
+    {
+        var order = {order: "set", who: who, info: {keyPath: keys, value: _clonedeep(value)}}
+        this.$_logs.push(order)
+    }
+
+
     // 2. 改变状态
     if (filtersOb.hasAsync)
     {
-        var change = await setObjectValueByKeysAsync(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this, who)
+        var change = await setObjectValueByKeysAsync(this.$_states, keys, value, filtersOb.filters, filterRope, this, who)
     } else
     {
-        var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, setterReturnInfo, this, who)
+        var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, filterRope, this, who)
     }
 
     // var change =   OBJ.setObjectValueByNames(this.$_states, keys, value)
 
+    //3. 记录 setting 指令
     if (change.change === true)
     {
         this.$_changeCount++;
     }
-    if (this.$enalbeLog)/*记录*/
-    {
-        this.$_log.push({order: "set", who: who, info: {keyPath: keys, value: _clonedeep(value)}})
-    }
+
 
     if (onlySet)
     {
         return;
     }
 
-    // 3.获取匹配的 finFilter 最终过滤器
+    // 3. finFilter 最终过滤器
     var finFiltersOb = this.$_getFilterByKeys("fin", keys)
 
     if (finFiltersOb.hasAsync)
@@ -399,7 +444,7 @@ Gob.prototype.$setValue = async function (keyPath, value, who, onlySet)
         {
             if (typeof  finFiltersOb.filters[0].func === "function")
             {
-                await  finFiltersOb.filters[0].func, call(this, change.oldValue, change.newValue, change.change, keys, who, setterReturnInfo)
+                await  finFiltersOb.filters[0].func.call(this, change.oldValue, change.newValue, change.change, keys, who, filterRope)
             }
         }
     } else
@@ -408,12 +453,79 @@ Gob.prototype.$setValue = async function (keyPath, value, who, onlySet)
         {
             if (typeof  finFiltersOb.filters[0].func === "function")
             {
-                finFiltersOb.filters[0].func.call(this, change.oldValue, change.newValue, change.change, keys, who, setterReturnInfo)
+                finFiltersOb.filters[0].func.call(this, change.oldValue, change.newValue, change.change, keys, who, filterRope)
             }
         }
     }
 
-    return setterReturnInfo
+    return {order: "update", who: who, info: {keyPath: keys, value: change.newValue}}
+}
+
+
+/**
+ * 根据键名列表直接更新值，不触发过滤器
+ * @param keyPath
+ * @param value
+ * @param who
+ */
+Gob.prototype.$updateValue = function (keyPath, value, who)
+{
+
+    var keys = keyPathToKeys(keyPath)
+    var change = setObjectValueByKeys(this.$_states, keys, value, [], {}, this, who)
+
+}
+
+
+/**
+ * 获取一个含有有 Gob 的语句的 KeyPath
+ * @param GobExpression
+ * @returns {null}
+ */
+Gob.prototype.$getKeyPath = function (GobExpression)
+{
+    return this.$_lastKeyPath
+}
+
+
+/**
+ * 开始一个记录
+ */
+Gob.prototype.$rec = function (onlyRecFinValue)
+{
+
+    if (onlyRecFinValue)
+    {
+        this.$_onlyRecFinValue = true
+    } else
+    {
+        this.$_onlyRecFinValue = false
+    }
+
+    this.$_logs = []
+    this.$enalbeLog = true
+}
+
+
+Gob.prototype.$recEnd = function ()
+{
+    var logs = this.$_logs
+    this.$enalbeLog = false
+    this.$_logs = []
+    return logs
+}
+
+
+Gob.prototype.$deleteStates = function (keyPath, who)
+{
+    var keys = keyPathToKeys(keyPath)
+    if (typeof  this.$hooks.USURP_deleteState === "function")
+    {
+        deleteObjectValueByKeys(this,keys,0,this.$hooks.USURP_deleteState)
+    } else
+    {
+
+    }
 
 }
 
@@ -426,6 +538,15 @@ Gob.prototype.$setValue = async function (keyPath, value, who, onlySet)
 Gob.prototype.$newStates = function (object, value, who)
 {
 
+    if (TYP.type(object) === "array" && arguments.length >= 2)
+    {
+        var object = keyPathToObject(object, value)
+        var thisWho = who
+    } else
+    {
+        var thisWho = value
+    }
+
     if (this.$mode !== "normal" && this.$mode != undefined)
     {
         console.log("$_applyModeState(object)", object)
@@ -435,15 +556,6 @@ Gob.prototype.$newStates = function (object, value, who)
         var object = ob.states
     }
 
-
-    if (TYP.type(object) === "array" && arguments.length >= 2)
-    {
-        var object = keyPathToObject(object, value)
-        var thisWho = who
-    } else
-    {
-        var thisWho = value
-    }
 
     var self = this
     giveSetter(object, [], 0, self, this, thisWho)
@@ -487,7 +599,10 @@ function giveSetter(object, keys, index, self, itr, who)
     {
         var newKeys = keys.concat(key)
         var isObject = false
-        if (object[key] != undefined)
+        if (object[key] != undefined)      if (typeof  self.$hooks.USURP_newStateObject === "function")
+        {
+            self.$hooks.USURP_newStateObject(itr, key, {}, keys)
+        } else
         {
             isObject = (TYP.type(object[key]) === "object")
         }
@@ -495,7 +610,13 @@ function giveSetter(object, keys, index, self, itr, who)
         {
             if (typeof  itr[key] !== "object")
             {
-                itr[key] = {}
+                // Vue.set(itr,key, {})
+
+                //
+
+                {
+                    itr[key] = {}
+                }
             }
 
             giveSetter(object[key], newKeys.slice(0), index + 1, self, itr[key], who)
@@ -503,11 +624,19 @@ function giveSetter(object, keys, index, self, itr, who)
         {
 
             // console.log("defineProperty", key, itr)
+
+
             Object.defineProperty(itr, key, setterCreators(newKeys.slice(0), self));
+            if (typeof  self.$hooks.newState === "function")
+            {
+                self.$hooks.newState(itr, key, object[key], keys)
+            }
+
+
             OBJ.setObjectValueByNames(self.$_states, newKeys, object[key])
             if (self.$enalbeLog)/*记录*/
             {
-                self.$_log.push({order: "new", who: who, info: {keyPath: newKeys, value: _clonedeep(object[key])}})
+                self.$_logs.push({order: "new", who: who, info: {keyPath: newKeys, value: _clonedeep(object[key])}})
 
             }
         }
@@ -587,7 +716,7 @@ function setterCreators(keys, self)
  * @param value
  * @returns {boolean}
  */
-async function setObjectValueByKeysAsync(object, keys, value, preFilters, setterReturnInfo, self, who)
+async function setObjectValueByKeysAsync(object, keys, value, preFilters, filterRope, self, who)
 {
     var nowObject;
     var change = false;
@@ -595,7 +724,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
     if (keys.length == 1)
     {
         var oldValue = object[keys[0]]
-        value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
+        value = await valuePreFilterAsync(oldValue, value, keys, preFilters, filterRope, self, who);
         change = checkChange(oldValue, value)
         object[keys[0]] = value
         return change
@@ -631,7 +760,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
                 }
                 nowObject = object[keys[0]];
                 var oldValue = nowObject[keys[1]]
-                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
+                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, filterRope, self, who);
                 change = checkChange(oldValue, value)
                 nowObject[keys[1]] = value
                 return change
@@ -645,7 +774,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
                 }
                 nowObject = nowObject[keys[i]];
                 var oldValue = nowObject[keys[i + 1]]
-                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
+                value = await valuePreFilterAsync(oldValue, value, keys, preFilters, filterRope, self, who);
                 change = checkChange(oldValue, value)
                 nowObject[keys[i + 1]] = value
                 return change
@@ -656,7 +785,7 @@ async function setObjectValueByKeysAsync(object, keys, value, preFilters, setter
     return change
 }
 
-function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo, self, who)
+function setObjectValueByKeys(object, keys, value, preFilters, filterRope, self, who)
 {
     var nowObject;
     var change = false;
@@ -664,7 +793,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
     if (keys.length == 1)
     {
         var oldValue = object[keys[0]]
-        value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
+        value = valuePreFilter(oldValue, value, keys, preFilters, filterRope, self, who);
         change = checkChange(oldValue, value)
         object[keys[0]] = value
         return change
@@ -700,7 +829,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
                 }
                 nowObject = object[keys[0]];
                 var oldValue = nowObject[keys[1]]
-                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
+                value = valuePreFilter(oldValue, value, keys, preFilters, filterRope, self, who);
                 change = checkChange(oldValue, value)
                 nowObject[keys[1]] = value
                 return change
@@ -713,7 +842,7 @@ function setObjectValueByKeys(object, keys, value, preFilters, setterReturnInfo,
                 }
                 nowObject = nowObject[keys[i]];
                 var oldValue = nowObject[keys[i + 1]]
-                value = valuePreFilter(oldValue, value, keys, preFilters, setterReturnInfo, self, who);
+                value = valuePreFilter(oldValue, value, keys, preFilters, filterRope, self, who);
                 change = checkChange(oldValue, value)
                 nowObject[keys[i + 1]] = value
                 return change
@@ -732,7 +861,7 @@ function checkChange(oldValue, newValue)
         return {change: true, oldValue: oldValue, newValue: newValue}
     }
 }
-async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterReturnInfo, self, who)
+async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, filterRope, self, who)
 {
     var finValue = newValue
     // console.log("finValue", finValue)
@@ -744,7 +873,7 @@ async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterR
             {
                 if (typeof preFilters[i].func === "function")
                 {
-                    finValue = await preFilters[i].func.call(self, oldValue, finValue, keys, who, setterReturnInfo)
+                    finValue = await preFilters[i].func.call(self, oldValue, finValue, keys, who, filterRope)
                 }
             }
         } catch (e)
@@ -754,7 +883,7 @@ async function valuePreFilterAsync(oldValue, newValue, keys, preFilters, setterR
     }
     return finValue
 }
-function valuePreFilter(oldValue, newValue, keys, preFilters, setterReturnInfo, self, who)
+function valuePreFilter(oldValue, newValue, keys, preFilters, filterRope, self, who)
 {
     var finValue = newValue
     if (preFilters != undefined && preFilters.length != undefined)
@@ -765,7 +894,7 @@ function valuePreFilter(oldValue, newValue, keys, preFilters, setterReturnInfo, 
             {
                 if (typeof preFilters[i].func === "function")
                 {
-                    finValue = preFilters[i].func.call(self, oldValue, finValue, keys, who, setterReturnInfo)
+                    finValue = preFilters[i].func.call(self, oldValue, finValue, keys, who, filterRope)
                 }
 
             }
@@ -854,29 +983,64 @@ function createModeStates(data)
 }
 
 function getObjectValueByKeys(object, keys, aheadEndTime)
+{
+
+    var itr = object
+    var finTime = (keys.length - (aheadEndTime || 0))
+    for (var i = 0; i < finTime; i++)
     {
-
-        var itr = object
-        var finTime = (keys.length - (aheadEndTime || 0))
-        for (var i = 0; i < finTime; i++)
+        if (i === finTime - 1)
         {
-            if (i === finTime - 1)
-            {
-                return itr[keys[i]]
-            }
-
-            if (itr[keys[i]] != undefined)
-            {
-                itr = itr[keys[i]];
-            }
-            else
-            {
-                return null
-            }
-
+            return itr[keys[i]]
         }
-    }
 
+        if (itr[keys[i]] != undefined)
+        {
+            itr = itr[keys[i]];
+        }
+        else
+        {
+            return null
+        }
+
+    }
+}
+
+function deleteObjectValueByKeys(object, keys, aheadEndTime, deleteFunc)
+{
+
+    var itr = object
+    var finTime = (keys.length - (aheadEndTime || 0))
+
+
+    if (typeof  deleteFunc === "function")
+    {
+        var useDeleteFunc = true
+    }
+    for (var i = 0; i < finTime; i++)
+    {
+        if (i === finTime - 1)
+        {
+            if (useDeleteFunc)
+            {
+                deleteFunc(itr, keys[i])
+            } else
+            {
+                delete itr[keys[i]]
+            }
+        }
+
+        if (itr[keys[i]] != undefined)
+        {
+            itr = itr[keys[i]];
+        }
+        else
+        {
+            return null
+        }
+
+    }
+}
 
 //-----------------------------------------------------------
 

@@ -5,7 +5,7 @@
 
 import  TYP from "./../lib/Richang_JSEX/typeTYP.js"
 
-var data = {
+var SampleStates = {
     text: {
         fontFamily: {type: "string", default: "微软雅黑"},
         colorHex: {type: "string", default: "#ffe"},
@@ -30,18 +30,21 @@ var GobMode_base_init = function ()
 
 function pre_range(oldValue, finValue, keys, who, setterReturnInfo)
 {
-    // console.log("pre_range",oldValue, finValue, keys, who, setterReturnInfo)
+
     var dataRange = this.$_getStateModeValueByKeys(keys.concat(["range"]))
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2)
     {
         if (finValue > dataRange[1]) finValue = dataRange[1];
         if (finValue < dataRange[0]) finValue = dataRange[0];
     }
+
+    // console.log("pre_range",oldValue, finValue, keys, who, setterReturnInfo)
     return finValue
 }
 
 function pre_type(oldValue, finValue, keys, who, setterReturnInfo)
 {
+    // console.log("pre_type",oldValue, finValue, keys, who, setterReturnInfo)
     var type = this.$_getStateModeValueByKeys(keys.concat(["type"]))
     if (type != undefined)
     {
@@ -67,6 +70,9 @@ function pre_type(oldValue, finValue, keys, who, setterReturnInfo)
             {
                 return "" + finValue
             }
+        }else
+        {
+            return finValue
         }
     }
     return oldValue
