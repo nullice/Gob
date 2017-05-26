@@ -524,9 +524,8 @@ Gob.prototype.$deleteStates = function (keyPath, who)
         deleteObjectValueByKeys(this,keys,0,this.$hooks.USURP_deleteState)
     } else
     {
-
+        deleteObjectValueByKeys(this,keys,0)
     }
-
 }
 
 /**

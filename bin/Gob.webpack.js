@@ -4423,7 +4423,9 @@ Gob.prototype.$deleteStates = function (keyPath, who) {
     var keys = keyPathToKeys(keyPath);
     if (typeof this.$hooks.USURP_deleteState === "function") {
         deleteObjectValueByKeys(this, keys, 0, this.$hooks.USURP_deleteState);
-    } else {}
+    } else {
+        deleteObjectValueByKeys(this, keys, 0);
+    }
 };
 
 /**
