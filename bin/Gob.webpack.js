@@ -4022,8 +4022,10 @@ var Gob = function () {
     this.$_setting = {};
     /*状态改变记录*/
     this.$enalbeLog = false;
-    this.$_onlyRecFinValue = false;
     this.$_logs = [];
+    this.$enalbeRec = false;
+    this.$_recs = [];
+    this.$_onlyRecFinValue = false;
     this.$_lastKeyPath = null;
     /*模式*/
     this.$mode = "normal";
@@ -4112,7 +4114,7 @@ Gob.prototype.$addFilter = function (fitlerType, filterName, filterFunction, key
 };
 
 /**
- * 移除
+ * 移除一个过滤器
  * @param fitlerType
  * @param filterName
  * @param keyPath
@@ -4312,31 +4314,29 @@ Gob.prototype.$getValue = function (keyPath) {
  * 根据键名列表设置键值
  * @param keys 键名列表
  * @param value 键值
- * @param onlySet 仅设置值，不触发 fin 过滤器
  * @returns {Promise.<void>}
  */
-Gob.prototype.$setValue = async function (keyPath, value, who, onlySet) {
-    var filterRope = {};
+Gob.prototype.$setValue = async function (keyPath, value, who) {
     var keys = keyPathToKeys(keyPath);
+    this.$_lastKeyPath = keys; //记录 keyPath
 
-    // console.log("$setValue", keys, value)
+    var filterRope = {}; //过滤器间额外信息通信管道
+
+    console.log("$setValue", keys, value);
     //0. 计数
     this.$_setCount++;
 
-    var keys = keyPathToKeys(keyPath);
+    /*logs 记录指令 */
+    if (this.$enalbeLog || this.$enalbeRec) {
+        var order = { order: "set", who: who, info: { keyPath: keys, value: _clonedeep(value) } };
+        if (this.$enalbeLog) this.$_logs.push(order);
+        if (this.$enalbeRec) this.$_recs.push(order);
+    }
+
     // 1. 获取匹配的 preFilter 前过滤器
     var filtersOb = this.$_getFilterByKeys("pre", keys);
-    // console.log("$setValue filtersOb", keys, filtersOb)
-    // console.log("hasAsync keys", keys, filtersOb.hasAsync)
-
-
-    // 1. 记录 keyPath
-    this.$_lastKeyPath = keys;
-    /*logs 记录指令 */
-    if (this.$enalbeLog) {
-        var order = { order: "set", who: who, info: { keyPath: keys, value: _clonedeep(value) } };
-        this.$_logs.push(order);
-    }
+    console.log("$setValue filtersOb", keys, filtersOb);
+    console.log("hasAsync keys", keys, filtersOb.hasAsync);
 
     // 2. 改变状态
     if (filtersOb.hasAsync) {
@@ -4345,15 +4345,9 @@ Gob.prototype.$setValue = async function (keyPath, value, who, onlySet) {
         var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, filterRope, this, who);
     }
 
-    // var change =   OBJ.setObjectValueByNames(this.$_states, keys, value)
-
     //3. 记录 setting 指令
     if (change.change === true) {
         this.$_changeCount++;
-    }
-
-    if (onlySet) {
-        return;
     }
 
     // 3. finFilter 最终过滤器
@@ -4388,6 +4382,48 @@ Gob.prototype.$updateValue = function (keyPath, value, who) {
     var change = setObjectValueByKeys(this.$_states, keys, value, [], {}, this, who);
 };
 
+Gob.prototype.$deleteStates = function (keyPath, who) {
+    var keys = keyPathToKeys(keyPath);
+    if (typeof this.$hooks.USURP_deleteState === "function") {
+        deleteObjectValueByKeys(this, keys, 0, this.$hooks.USURP_deleteState);
+    } else {
+        deleteObjectValueByKeys(this, keys, 0);
+    }
+
+    if (this.$enalbeLog || this.$enalbeRec) {
+        var order = { order: "del", who: who, info: { keyPath: keys } };
+        if (this.$enalbeLog) this.$_logs.push(order);
+        if (this.$enalbeRec) this.$_recs.push(order);
+    }
+};
+
+/**
+ * 添加新状态
+ * $newStates({a:{b:100}}) 或 $newStates(["a","b"],100)
+ * @param object
+ * @param value
+ */
+Gob.prototype.$newStates = function (object, value, who) {
+
+    if (__WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(object) === "array" && arguments.length >= 2) {
+        var object = keyPathToObject(object, value);
+        var thisWho = who;
+    } else {
+        var thisWho = value;
+    }
+
+    if (this.$mode !== "normal" && this.$mode != undefined) {
+        console.log("$_applyModeState(object)", object);
+
+        var ob = createModeStates(object);
+        this.$_modeData = ob.modeData;
+        var object = ob.states;
+    }
+
+    var self = this;
+    giveSetter(object, [], 0, self, this, thisWho);
+};
+
 /**
  * 获取一个含有有 Gob 的语句的 KeyPath
  * @param GobExpression
@@ -4417,42 +4453,6 @@ Gob.prototype.$recEnd = function () {
     this.$enalbeLog = false;
     this.$_logs = [];
     return logs;
-};
-
-Gob.prototype.$deleteStates = function (keyPath, who) {
-    var keys = keyPathToKeys(keyPath);
-    if (typeof this.$hooks.USURP_deleteState === "function") {
-        deleteObjectValueByKeys(this, keys, 0, this.$hooks.USURP_deleteState);
-    } else {
-        deleteObjectValueByKeys(this, keys, 0);
-    }
-};
-
-/**
- * 添加新状态
- * $newStates({a:{b:100}}) 或 $newStates(["a","b"],100)
- * @param object
- * @param value
- */
-Gob.prototype.$newStates = function (object, value, who) {
-
-    if (__WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(object) === "array" && arguments.length >= 2) {
-        var object = keyPathToObject(object, value);
-        var thisWho = who;
-    } else {
-        var thisWho = value;
-    }
-
-    if (this.$mode !== "normal" && this.$mode != undefined) {
-        console.log("$_applyModeState(object)", object);
-
-        var ob = createModeStates(object);
-        this.$_modeData = ob.modeData;
-        var object = ob.states;
-    }
-
-    var self = this;
-    giveSetter(object, [], 0, self, this, thisWho);
 };
 
 /**
@@ -4485,37 +4485,35 @@ function giveSetter(object, keys, index, self, itr, who) {
     for (var key in object) {
         var newKeys = keys.concat(key);
         var isObject = false;
-        if (object[key] != undefined) if (typeof self.$hooks.USURP_newStateObject === "function") {
+
+        if (typeof self.$hooks.USURP_newStateObject === "function") {
             self.$hooks.USURP_newStateObject(itr, key, {}, keys);
-        } else {
+        }
+
+        if (object[key] != undefined) {
             isObject = __WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(object[key]) === "object";
         }
+
         if (isObject && __WEBPACK_IMPORTED_MODULE_3__lib_Richang_JSEX_objectOBJ_js__["a" /* default */].isEmptyObject(object[key]) !== true) {
             if (typeof itr[key] !== "object") {
-                // Vue.set(itr,key, {})
-
-                //
-
-                {
-                    itr[key] = {};
-                }
+                itr[key] = {};
             }
 
             giveSetter(object[key], newKeys.slice(0), index + 1, self, itr[key], who);
         } else {
 
-            // console.log("defineProperty", key, itr)
-
-
+            console.log("defineProperty", key, itr);
             __WEBPACK_IMPORTED_MODULE_1_babel_runtime_core_js_object_define_property___default()(itr, key, setterCreators(newKeys.slice(0), self));
             if (typeof self.$hooks.newState === "function") {
                 self.$hooks.newState(itr, key, object[key], keys);
             }
 
             __WEBPACK_IMPORTED_MODULE_3__lib_Richang_JSEX_objectOBJ_js__["a" /* default */].setObjectValueByNames(self.$_states, newKeys, object[key]);
-            if (self.$enalbeLog) /*记录*/
+            if (self.$enalbeLog || self.$enalbeRec) /*记录*/
                 {
-                    self.$_logs.push({ order: "new", who: who, info: { keyPath: newKeys, value: _clonedeep(object[key]) } });
+                    var order = { order: "new", who: who, info: { keyPath: newKeys, value: _clonedeep(object[key]) } };
+                    if (self.$enalbeLog) self.$_logs.push(order);
+                    if (self.$enalbeRec) self.$_recs.push(order);
                 }
         }
     }
@@ -5138,6 +5136,10 @@ var GobMode_VueSupport_init = function (vue) {
 
         self.$hooks.USURP_newStateObject = function (object, key, value, keys) {
             Vue.set(object, key, value);
+        };
+
+        self.$hooks.USURP_deleteState = function (object, key) {
+            Vue.util.del(object, key);
         };
 
         //值更新后触发 Vue 的更新
