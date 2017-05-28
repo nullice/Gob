@@ -876,14 +876,14 @@ Gob.prototype.$getKeyPath = function (GobExpression) {
  */
 Gob.prototype.$rec = function () {
 
-    this.$_logs = [];
-    this.$enalbeLog = true;
+    this.$_recs = [];
+    this.$enalbeRec = true;
 };
 
 Gob.prototype.$recEnd = function () {
-    var logs = this.$_logs;
-    this.$enalbeLog = false;
-    this.$_logs = [];
+    var logs = this.$_recs;
+    this.$enalbeRec = false;
+    this.$_recs = [];
     return logs;
 };
 
