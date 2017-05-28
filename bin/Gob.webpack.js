@@ -4025,7 +4025,6 @@ var Gob = function () {
     this.$_logs = [];
     this.$enalbeRec = false;
     this.$_recs = [];
-    this.$_onlyRecFinValue = false;
     this.$_lastKeyPath = null;
     /*模式*/
     this.$mode = "normal";
@@ -4443,13 +4442,7 @@ Gob.prototype.$getKeyPath = function (GobExpression) {
 /**
  * 开始一个记录
  */
-Gob.prototype.$rec = function (onlyRecFinValue) {
-
-    if (onlyRecFinValue) {
-        this.$_onlyRecFinValue = true;
-    } else {
-        this.$_onlyRecFinValue = false;
-    }
+Gob.prototype.$rec = function () {
 
     this.$_logs = [];
     this.$enalbeLog = true;
