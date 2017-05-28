@@ -732,7 +732,7 @@ Gob.prototype.$exec = function (order) {
 Gob.prototype.$getValue = function (keyPath) {
     // console.log("$getValue", keyPath)
     var keys = keyPathToKeys(keyPath);
-    this.$_lastLog = { order: "get", info: { keyPath: keys } };
+    this.$_lastKeyPath = keys;
     return getObjectValueByKeys(this.$_states, keys);
 };
 
@@ -748,22 +748,21 @@ Gob.prototype.$setValue = (() => {
         this.$_lastKeyPath = keys; //记录 keyPath
 
         var filterRope = {}; //过滤器间额外信息通信管道
-
-        console.log("$setValue", keys, value);
+        // console.log("$setValue", keys, value)
         //0. 计数
         this.$_setCount++;
 
         /*logs 记录指令 */
         if (this.$enalbeLog || this.$enalbeRec) {
-            var order = { order: "set", who: who, info: { keyPath: keys, value: _clonedeep(value) } };
+            var order = { order: "set", who: who, keyPath: keys, value: _clonedeep(value) };
             if (this.$enalbeLog) this.$_logs.push(order);
             if (this.$enalbeRec) this.$_recs.push(order);
         }
 
         // 1. 获取匹配的 preFilter 前过滤器
         var filtersOb = this.$_getFilterByKeys("pre", keys);
-        console.log("$setValue filtersOb", keys, filtersOb);
-        console.log("hasAsync keys", keys, filtersOb.hasAsync);
+        // console.log("$setValue filtersOb", keys, filtersOb)
+        // console.log("hasAsync keys", keys, filtersOb.hasAsync)
 
         // 2. 改变状态
         if (filtersOb.hasAsync) {
@@ -794,7 +793,7 @@ Gob.prototype.$setValue = (() => {
             }
         }
 
-        return { order: "update", who: who, info: { keyPath: keys, value: change.newValue } };
+        return { order: "update", who: who, keyPath: keys, value: change.newValue };
     });
 
     return function (_x3, _x4, _x5) {
@@ -811,11 +810,19 @@ Gob.prototype.$setValue = (() => {
 Gob.prototype.$updateValue = function (keyPath, value, who) {
 
     var keys = keyPathToKeys(keyPath);
+    this.$_lastKeyPath = keys;
     var change = setObjectValueByKeys(this.$_states, keys, value, [], {}, this, who);
 };
 
+/**
+ * 删除一个状态
+ * @param keyPath
+ * @param who
+ */
 Gob.prototype.$deleteStates = function (keyPath, who) {
     var keys = keyPathToKeys(keyPath);
+    this.$_lastKeyPath = keys;
+
     if (typeof this.$hooks.USURP_deleteState === "function") {
         deleteObjectValueByKeys(this, keys, 0, this.$hooks.USURP_deleteState);
     } else {
@@ -823,7 +830,7 @@ Gob.prototype.$deleteStates = function (keyPath, who) {
     }
 
     if (this.$enalbeLog || this.$enalbeRec) {
-        var order = { order: "del", who: who, info: { keyPath: keys } };
+        var order = { order: "del", who: who, keyPath: keys };
         if (this.$enalbeLog) this.$_logs.push(order);
         if (this.$enalbeRec) this.$_recs.push(order);
     }
@@ -907,7 +914,7 @@ Gob.prototype.$use = function (initFunc) {
 
 /*-------------------------*/
 /**
- *
+ * 给状态添加 setter 、getter
  * @param object
  * @param keys
  * @param index
@@ -943,7 +950,7 @@ function giveSetter(object, keys, index, self, itr, who) {
             objectOBJ.setObjectValueByNames(self.$_states, newKeys, object[key]);
             if (self.$enalbeLog || self.$enalbeRec) /*记录*/
                 {
-                    var order = { order: "new", who: who, info: { keyPath: newKeys, value: _clonedeep(object[key]) } };
+                    var order = { order: "new", who: who, keyPath: newKeys, value: _clonedeep(object[key]) };
                     if (self.$enalbeLog) self.$_logs.push(order);
                     if (self.$enalbeRec) self.$_recs.push(order);
                 }
