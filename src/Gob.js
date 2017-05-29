@@ -9,13 +9,15 @@ import  GobMode_Base from "./modes/GobMode-Base.js"
 import  GobMode_VueSupport from "./modes/GobMode-VueSupport.js"
 const _clonedeep = require("./../node_modules/lodash.clonedeep")
 
-var Gob = function ()
+var Gob = function (initalStates)
 {
     this.$isGob = true;
+    this.$entrail= {};
+
     /*set 调用次数*/
-    this.$_setCount = 0;
+    this.$countSet = 0;
     /* 状态改变次数*/
-    this.$_changeCount = 0;
+    this.$countChange = 0;
     /*状态存储*/
     this.$_states = {};
     /*模式数据存储*/
@@ -50,16 +52,22 @@ var Gob = function ()
     Object.defineProperty(this, "$mode", {enumerable: false});
     Object.defineProperty(this, "$isGob", {enumerable: false});
     Object.defineProperty(this, "$_modeData", {enumerable: false});
-    Object.defineProperty(this, "$enalbeLog", {enumerable: false});
     Object.defineProperty(this, "$_setting", {enumerable: false});
+    Object.defineProperty(this, "$enalbeLog", {enumerable: false});
+    Object.defineProperty(this, "$enalbeRec", {enumerable: false});
+    Object.defineProperty(this, "$_recs", {enumerable: false});
     Object.defineProperty(this, "$_logs", {enumerable: false});
     Object.defineProperty(this, "$_lastKeyPath", {enumerable: false});
-    Object.defineProperty(this, "$_setCount", {enumerable: false});
-    Object.defineProperty(this, "$_changeCount", {enumerable: false});
+    Object.defineProperty(this, "$countSet", {enumerable: false});
+    Object.defineProperty(this, "$countChange", {enumerable: false});
     Object.defineProperty(this, "$_states", {enumerable: false});
     Object.defineProperty(this, "$hooks", {enumerable: false});
     Object.defineProperty(this, "$util", {enumerable: false});
 
+    if (typeof  initalStates === "object")
+    {
+        this.$newStates(initalStates)
+    }
 
     var self = this
     return this;
@@ -394,7 +402,7 @@ Gob.prototype.$setValue = async function (keyPath, value, who)
     var filterRope = {}   //过滤器间额外信息通信管道
     // console.log("$setValue", keys, value)
     //0. 计数
-    this.$_setCount++;
+    this.$countSet++;
 
     /*logs 记录指令 */
     if (this.$enalbeLog || this.$enalbeRec)
@@ -423,7 +431,7 @@ Gob.prototype.$setValue = async function (keyPath, value, who)
     //3. 记录 setting 指令
     if (change.change === true)
     {
-        this.$_changeCount++;
+        this.$countChange++;
     }
 
 
@@ -476,7 +484,7 @@ Gob.prototype.$updateValue = function (keyPath, value, who)
  * @param keyPath
  * @param who
  */
-Gob.prototype.$deleteStates = function (keyPath, who)
+Gob.prototype.$deleteState = function (keyPath, who)
 {
     var keys = keyPathToKeys(keyPath)
     this.$_lastKeyPath = keys

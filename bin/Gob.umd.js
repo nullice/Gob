@@ -428,8 +428,10 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 
 const _clonedeep = require("./../node_modules/lodash.clonedeep");
 
-var Gob = function () {
+var Gob = function (initalStates) {
     this.$isGob = true;
+    this.$entrail = true;
+
     /*set 调用次数*/
     this.$_setCount = 0;
     /* 状态改变次数*/
@@ -468,8 +470,10 @@ var Gob = function () {
     Object.defineProperty(this, "$mode", { enumerable: false });
     Object.defineProperty(this, "$isGob", { enumerable: false });
     Object.defineProperty(this, "$_modeData", { enumerable: false });
-    Object.defineProperty(this, "$enalbeLog", { enumerable: false });
     Object.defineProperty(this, "$_setting", { enumerable: false });
+    Object.defineProperty(this, "$enalbeLog", { enumerable: false });
+    Object.defineProperty(this, "$enalbeRec", { enumerable: false });
+    Object.defineProperty(this, "$_recs", { enumerable: false });
     Object.defineProperty(this, "$_logs", { enumerable: false });
     Object.defineProperty(this, "$_lastKeyPath", { enumerable: false });
     Object.defineProperty(this, "$_setCount", { enumerable: false });
@@ -477,6 +481,10 @@ var Gob = function () {
     Object.defineProperty(this, "$_states", { enumerable: false });
     Object.defineProperty(this, "$hooks", { enumerable: false });
     Object.defineProperty(this, "$util", { enumerable: false });
+
+    if (typeof initalStates === "object") {
+        this.$newStates(initalStates);
+    }
 
     var self = this;
     return this;
@@ -818,7 +826,7 @@ Gob.prototype.$updateValue = function (keyPath, value, who) {
  * @param keyPath
  * @param who
  */
-Gob.prototype.$deleteStates = function (keyPath, who) {
+Gob.prototype.$deleteState = function (keyPath, who) {
     var keys = keyPathToKeys(keyPath);
     this.$_lastKeyPath = keys;
 

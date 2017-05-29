@@ -1,5 +1,5 @@
 {
-  "name": "Gob",
+  "name": "gob-js",
   "version": "0.0.0",
   "main": "./src/Gob.js",
   "module": "src/Gob.js",

@@ -165,7 +165,53 @@ Gob 的核心思想就是通过滤器来处理状态改变时的所有逻辑。
 
 ```
 
+## API
+
+### `new GOB()`
+创建 Gob 对象。
 
 ```js
-的撒发生地方
+import GOB from 'gob-js';
+
+//创建一个 Gob 对象
+var gob = new GOB()
+
+//构造函数可以接受初始状态对象
+var gob2 = new GOB({text:{fontSize:12}})
+
+// Gob 对象可以直接序列化
+JSON.stringify(gob) // "{"text":{"fontSize":12}}"
+
 ```
+
+
+
+### `gob.$newStates()`
+添加新状态到 Gob 对象。
+
+- `gob.$newStates(object)`
+- `gob.$newStates(keyPath, value)`
+
+```js
+var gob = new GOB()
+
+// 添加新状态到 Gob 对象
+gob.$newStates(
+    {
+        text: {
+            color: {r: 123, g: 255, b: 234}
+        }
+    }
+    )
+JSON.stringify(gob) //"{"text":{"color":{"r":123,"g":255,"b":234}}}"
+
+
+// 可以用键名路径来添加新状态，但一次只能添加一个
+gob.$newStates(["text","fontSize"], 24)
+JSON.stringify(gob) //"{"text":{"fontSize":24,"color":{"r":123,"g":255,"b":234}}}"
+
+
+```
+
+
+
