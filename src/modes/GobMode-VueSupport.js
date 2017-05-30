@@ -24,14 +24,14 @@ var GobMode_VueSupport_init = function (vue)
                 Vue.util.defineReactive(object, key, value,)
             }
 
-        self.$hooks.USURP_newStateObject =
+        self.$hooks.OVERWRITE_newStateObject =
             function (object, key, value, keys)
             {
                 Vue.set(object, key, value)
             }
 
 
-        self.$hooks.USURP_deleteState = function (object, key)
+        self.$hooks.OVERWRITE_newStateObject = function (object, key)
         {
             Vue.util.del(object, key)
         }

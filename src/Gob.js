@@ -12,69 +12,61 @@ const _clonedeep = require("./../node_modules/lodash.clonedeep")
 var Gob = function (initalStates)
 {
     this.$isGob = true;
-    this.$entrail= {};
 
-    /*set 调用次数*/
-    this.$countSet = 0;
-    /* 状态改变次数*/
-    this.$countChange = 0;
-    /*状态存储*/
-    this.$_states = {};
-    /*模式数据存储*/
-    this.$_modeData = {}
-    /*可供模式自由存放普通属性的对象*/
-    this.$_setting = {}
-    /*状态改变记录*/
-    this.$enalbeLog = false
-    this.$_logs = [];
-    this.$enalbeRec = false
-    this.$_recs = [];
-    this.$_lastKeyPath = null;
-    /*模式*/
-    this.$mode = "normal";
+    /*内部属性与方法容器*/
+    if (this.$_entrails === undefined)
+    {
+        this.$_entrails = {};
+    }
 
-    this.$fitlers = {
+
+    this.$_entrails.count = {
+        set: 0,   //set 调用次数
+        change: 0   //状态改变次数
+    }
+    this.$_entrails.states = {}          //状态存储对象
+    this.$_entrails.modeData = {}        //模式数据存储对象
+    this.$_entrails.setting = {}         //可供过滤器自由存放普通属性的对象
+    this.$_entrails.enalbeRec = false    //启用状态改变动作录制
+    this.$_entrails.recs = []             //存储录制的状态改变动作
+    this.$_entrails.lastKeyPath = null;  //最后一次使用的 KetPath
+    this.$_entrails.mode = "normal";      //当前模式
+    this.$_entrails.fitlers = {
         preFilters: {__root: {}},
         finFilters: {__root: {}},
     };
-    this.$hooks = {
+    this.$_entrails.hooks = {            // hook
         newState: null,
-        USURP_newStateObject: null,
+        OVERWRITE_newStateObject: null,
+        OVERWRITE_deleteState: null,
+    }
+    this.$log = {
+        enableLog: false,                 // 启用状态改变记录
+        list: []                           // 改变指令记录列表
     }
 
-    this.$util = {
-        getObjectValueByKeys: getObjectValueByKeys,
-        deleteObjectValueByKeys: deleteObjectValueByKeys
 
-    }
-
-    Object.defineProperty(this, "$fitlers", {enumerable: false});
-    Object.defineProperty(this, "$mode", {enumerable: false});
-    Object.defineProperty(this, "$isGob", {enumerable: false});
-    Object.defineProperty(this, "$_modeData", {enumerable: false});
-    Object.defineProperty(this, "$_setting", {enumerable: false});
-    Object.defineProperty(this, "$enalbeLog", {enumerable: false});
-    Object.defineProperty(this, "$enalbeRec", {enumerable: false});
-    Object.defineProperty(this, "$_recs", {enumerable: false});
-    Object.defineProperty(this, "$_logs", {enumerable: false});
-    Object.defineProperty(this, "$_lastKeyPath", {enumerable: false});
-    Object.defineProperty(this, "$countSet", {enumerable: false});
-    Object.defineProperty(this, "$countChange", {enumerable: false});
-    Object.defineProperty(this, "$_states", {enumerable: false});
-    Object.defineProperty(this, "$hooks", {enumerable: false});
+    // 设置属性不可枚举
+    Object.defineProperty(this, "$_entrails", {enumerable: false});
+    Object.defineProperty(this, "$log", {enumerable: false});
     Object.defineProperty(this, "$util", {enumerable: false});
 
+
+    // 构造函数
     if (typeof  initalStates === "object")
     {
         this.$newStates(initalStates)
     }
-
     var self = this
     return this;
 }
 
 Gob.prototype.$MODES = {BASE: GobMode_Base, VUE_SUPPORT: GobMode_VueSupport};
-
+Gob.prototype.$util = {
+    getObjectValueByKeys: getObjectValueByKeys,
+    deleteObjectValueByKeys: deleteObjectValueByKeys
+}
+Gob.$util = Gob.prototype.$util
 
 /**
  * 添加一个过滤器
@@ -108,10 +100,10 @@ Gob.prototype.$addFilter = function (fitlerType, filterName, filterFunction, key
     var keys = keyPathToKeys(keyPath)
     if (fitlerType === "pre")
     {
-        var tragetFilters = this.$fitlers.preFilters
+        var tragetFilters = this.$_entrails.fitlers.preFilters
     } else if (fitlerType === "fin")
     {
-        var tragetFilters = this.$fitlers.finFilters
+        var tragetFilters = this.$_entrails.fitlers.finFilters
     }
 
     // console.log("$addFilter", tragetFilters, keys.concat(["__root", filterName]))
@@ -160,10 +152,10 @@ Gob.prototype.$removeFilter = function (fitlerType, filterName, keyPath)
     var keys = keyPathToKeys(keyPath)
     if (fitlerType === "pre")
     {
-        var tragetFilters = this.$fitlers.preFilters
+        var tragetFilters = this.$_entrails.fitlers.preFilters
     } else if (fitlerType === "fin")
     {
-        var tragetFilters = this.$fitlers.finFilters
+        var tragetFilters = this.$_entrails.fitlers.finFilters
     }
 
     var __root = getObjectValueByKeys(tragetFilters, keys.concat(["__root"]))
@@ -231,10 +223,10 @@ Gob.prototype.$_getFilterByKeys = function (fitlerType, keys)
     var keys = keys.slice(0)
     if (fitlerType === "pre")
     {
-        var tragetFilters = this.$fitlers.preFilters
+        var tragetFilters = this.$_entrails.fitlers.preFilters
     } else if (fitlerType === "fin")
     {
-        var tragetFilters = this.$fitlers.finFilters
+        var tragetFilters = this.$_entrails.fitlers.finFilters
     }
     var filters = []
     var hasAsync = false;
@@ -383,8 +375,8 @@ Gob.prototype.$getValue = function (keyPath)
 {
     // console.log("$getValue", keyPath)
     var keys = keyPathToKeys(keyPath)
-    this.$_lastKeyPath = keys
-    return getObjectValueByKeys(this.$_states, keys);
+    this.$_entrails.lastKeyPath = keys
+    return getObjectValueByKeys(this.$_entrails.states, keys);
 }
 
 
@@ -397,19 +389,19 @@ Gob.prototype.$getValue = function (keyPath)
 Gob.prototype.$setValue = async function (keyPath, value, who)
 {
     var keys = keyPathToKeys(keyPath)
-    this.$_lastKeyPath = keys  //记录 keyPath
+    this.$_entrails.lastKeyPath = keys  //记录 keyPath
 
     var filterRope = {}   //过滤器间额外信息通信管道
     // console.log("$setValue", keys, value)
     //0. 计数
-    this.$countSet++;
+    this.$_entrails.count.set++;
 
     /*logs 记录指令 */
-    if (this.$enalbeLog || this.$enalbeRec)
+    if (this.$log.enableLog || this.$_entrails.enalbeRec)
     {
         var order = {order: "set", who: who, keyPath: keys, value: _clonedeep(value)}
-        if (this.$enalbeLog) this.$_logs.push(order);
-        if (this.$enalbeRec) this.$_recs.push(order);
+        if (this.$log.enableLog) this.$log.list.push(order);
+        if (this.$_entrails.enalbeRec) this.$_entrails.recs.push(order);
     }
 
 
@@ -421,17 +413,17 @@ Gob.prototype.$setValue = async function (keyPath, value, who)
     // 2. 改变状态
     if (filtersOb.hasAsync)
     {
-        var change = await setObjectValueByKeysAsync(this.$_states, keys, value, filtersOb.filters, filterRope, this, who)
+        var change = await setObjectValueByKeysAsync(this.$_entrails.states, keys, value, filtersOb.filters, filterRope, this, who)
     } else
     {
-        var change = setObjectValueByKeys(this.$_states, keys, value, filtersOb.filters, filterRope, this, who)
+        var change = setObjectValueByKeys(this.$_entrails.states, keys, value, filtersOb.filters, filterRope, this, who)
     }
 
 
     //3. 记录 setting 指令
     if (change.change === true)
     {
-        this.$countChange++;
+        this.$_entrails.count.change++;
     }
 
 
@@ -473,8 +465,8 @@ Gob.prototype.$updateValue = function (keyPath, value, who)
 {
 
     var keys = keyPathToKeys(keyPath)
-    this.$_lastKeyPath = keys
-    var change = setObjectValueByKeys(this.$_states, keys, value, [], {}, this, who)
+    this.$_entrails.lastKeyPath = keys
+    var change = setObjectValueByKeys(this.$_entrails.states, keys, value, [], {}, this, who)
 
 }
 
@@ -487,21 +479,21 @@ Gob.prototype.$updateValue = function (keyPath, value, who)
 Gob.prototype.$deleteState = function (keyPath, who)
 {
     var keys = keyPathToKeys(keyPath)
-    this.$_lastKeyPath = keys
+    this.$_entrails.lastKeyPath = keys
 
-    if (typeof  this.$hooks.USURP_deleteState === "function")
+    if (typeof  this.$_entrails.hooks.OVERWRITE_deleteState === "function")
     {
-        deleteObjectValueByKeys(this, keys, 0, this.$hooks.USURP_deleteState)
+        deleteObjectValueByKeys(this, keys, 0, this.$_entrails.hooks.OVERWRITE_deleteState)
     } else
     {
         deleteObjectValueByKeys(this, keys, 0)
     }
 
-    if (this.$enalbeLog || this.$enalbeRec)
+    if (this.$log.enableLog || this.$_entrails.enalbeRec)
     {
         var order = {order: "del", who: who, keyPath: keys}
-        if (this.$enalbeLog) this.$_logs.push(order);
-        if (this.$enalbeRec) this.$_recs.push(order);
+        if (this.$log.enableLog) this.$log.list.push(order);
+        if (this.$_entrails.enalbeRec) this.$_entrails.recs.push(order);
     }
 
 }
@@ -524,12 +516,12 @@ Gob.prototype.$newStates = function (object, value, who)
         var thisWho = value
     }
 
-    if (this.$mode !== "normal" && this.$mode != undefined)
+    if (this.$_entrails.mode !== "normal" && this.$_entrails.mode != undefined)
     {
-        console.log("$_applyModeState(object)", object)
+        console.log("$util.applyModeState(object)", object)
 
         var ob = createModeStates(object)
-        this.$_modeData = ob.modeData
+        this.$_entrails.modeData = ob.modeData
         var object = ob.states
     }
 
@@ -546,7 +538,7 @@ Gob.prototype.$newStates = function (object, value, who)
  */
 Gob.prototype.$getKeyPath = function (GobExpression)
 {
-    return this.$_lastKeyPath
+    return this.$_entrails.lastKeyPath
 }
 
 
@@ -556,40 +548,61 @@ Gob.prototype.$getKeyPath = function (GobExpression)
 Gob.prototype.$rec = function ()
 {
 
-    this.$_recs = []
-    this.$enalbeRec = true
+    this.$_entrails.recs = []
+    this.$_entrails.enalbeRec = true
 }
 
 
 Gob.prototype.$recEnd = function ()
 {
-    var logs = this.$_recs
-    this.$enalbeRec = false
-    this.$_recs = []
+    var logs = this.$_entrails.recs
+    this.$_entrails.enalbeRec = false
+    this.$_entrails.recs = []
     return logs
 }
 
 
 /**
- * 把 ModeState 状态模型数据应用到实例上
+ * 把 ModeState 模式的状态数据应用到实例上
  * @param object
  */
-Gob.prototype.$_applyModeState = function (object)
+Gob.prototype.$util.applyModeState = function (object)
 {
     var ob = createModeStates(object)
     this.$newStates(ob.states)
-    this.$_modeData = ob.modeData
+    this.$_entrails.modeData = ob.modeData
 
 }
 
-Gob.prototype.$_getStateModeValueByKeys = function (keys)
+/**
+ * 根据 keys 获取获取 Gob 实例中的 ModeState
+ * @param keys
+ * @returns {*}
+ */
+Gob.prototype.$util.getModeStateValueByKeys = function (keys)
 {
-    return getObjectValueByKeys(this.$_modeData, keys)
+    return getObjectValueByKeys(this.$_entrails.modeData, keys)
 }
 
+
+/**
+ * 应用一个模式或者插件
+ * @param initFunc
+ */
 Gob.prototype.$use = function (initFunc)
 {
-    initFunc.apply(this)
+
+    if (typeof initFunc === "function")
+    {
+        initFunc.apply(this)
+    }
+    else if (typeof initFunc === "object")
+    {
+        if (typeof initFunc.init === "function")
+        {
+            initFunc.init.apply(this)
+        }
+    }
 }
 
 
@@ -608,9 +621,9 @@ function giveSetter(object, keys, index, self, itr, who)
         var newKeys = keys.concat(key)
         var isObject = false
 
-        if (typeof  self.$hooks.USURP_newStateObject === "function")
+        if (typeof  self.$_entrails.hooks.OVERWRITE_newStateObject === "function")
         {
-            self.$hooks.USURP_newStateObject(itr, key, {}, keys)
+            self.$_entrails.hooks.OVERWRITE_newStateObject(itr, key, {}, keys)
         }
 
 
@@ -631,20 +644,20 @@ function giveSetter(object, keys, index, self, itr, who)
         } else
         {
 
-            console.log("defineProperty", key, itr)
+            // console.log("defineProperty", key, itr)
             Object.defineProperty(itr, key, setterCreators(newKeys.slice(0), self));
-            if (typeof  self.$hooks.newState === "function")
+            if (typeof  self.$_entrails.hooks.newState === "function")
             {
-                self.$hooks.newState(itr, key, object[key], keys)
+                self.$_entrails.hooks.newState(itr, key, object[key], keys)
             }
 
 
-            OBJ.setObjectValueByNames(self.$_states, newKeys, object[key])
-            if (self.$enalbeLog || self.$enalbeRec)/*记录*/
+            OBJ.setObjectValueByNames(self.$_entrails.states, newKeys, object[key])
+            if (self.$log.enableLog || self.$_entrails.enalbeRec)/*记录*/
             {
                 var order = {order: "new", who: who, keyPath: newKeys, value: _clonedeep(object[key])}
-                if (self.$enalbeLog) self.$_logs.push(order);
-                if (self.$enalbeRec) self.$_recs.push(order);
+                if (self.$log.enableLog) self.$log.list.push(order);
+                if (self.$_entrails.enalbeRec) self.$_entrails.recs.push(order);
 
             }
 
@@ -652,7 +665,7 @@ function giveSetter(object, keys, index, self, itr, who)
 
     }
 }
-
+0
 
 //-------------------------------------------------------
 
@@ -1089,7 +1102,6 @@ Object.defineProperty(Gob.prototype, "$addFinFilter", propertySetting);
 Object.defineProperty(Gob.prototype, "$addPreFilter", propertySetting);
 Object.defineProperty(Gob.prototype, "doAsync", propertySetting);
 Object.defineProperty(Gob.prototype, "sleep", propertySetting);
-Object.defineProperty(Gob.prototype, "$modes", propertySetting);
 
 
 export default  Gob;
