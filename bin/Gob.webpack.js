@@ -4044,7 +4044,6 @@ var Gob = function (initalStates) {
     // 设置属性不可枚举
     Object.defineProperty(this, "$_entrails", { enumerable: false });
     Object.defineProperty(this, "$log", { enumerable: false });
-    Object.defineProperty(this, "$util", { enumerable: false });
 
     // 构造函数
     if (typeof initalStates === "object") {
@@ -4059,7 +4058,55 @@ Gob.prototype.$util = {
     getObjectValueByKeys: getObjectValueByKeys,
     deleteObjectValueByKeys: deleteObjectValueByKeys
 };
-Gob.$util = Gob.prototype.$util;
+// Object.defineProperty(Gob.prototype, "$util", {enumerable: false});
+// Gob.$util = Gob.prototype.$util
+
+/**
+ * 根据键名列表获取匹配的过滤器列表
+ * @param fitlerType
+ * @param keys
+ * @returns {{hasAsync: boolean, filters: Array}}
+ */
+Gob.prototype.$getFilterByKeys = function (fitlerType, keys) {
+    var keys = keys.slice(0);
+    if (fitlerType === "pre") {
+        var tragetFilters = this.$_entrails.fitlers.preFilters;
+    } else if (fitlerType === "fin") {
+        var tragetFilters = this.$_entrails.fitlers.finFilters;
+    }
+    var filters = [];
+    var hasAsync = false;
+    for (var i = 0; i < keys.length + 1; i++) {
+        var oncefilters = [];
+        var onceKeys = keys.slice(0, keys.length - i);
+        // console.info("scan filter:", onceKeys.concat(["__root"]))
+        var filtersOb = getObjectValueByKeys(tragetFilters, onceKeys.concat(["__root"]));
+        for (var x in filtersOb) {
+            if (filtersOb[x].isAsync) {
+                hasAsync = true;
+            }
+            oncefilters.push(filtersOb[x]);
+        }
+        oncefilters.sort(function (a, b) {
+            var result = b.level - a.level;
+            if (result === 0) {
+                var nameA = a.filterName.toUpperCase();
+                var nameB = b.filterName.toUpperCase();
+                if (nameA < nameB) {
+                    return -1;
+                }
+                if (nameA > nameB) {
+                    return 1;
+                }
+            }
+            return result;
+        });
+
+        filters = oncefilters.concat(filters);
+    }
+
+    return { hasAsync: hasAsync, filters: filters };
+};
 
 /**
  * 添加一个过滤器
@@ -4177,93 +4224,10 @@ Gob.prototype.$addFinFilter = function (filterName, filterFunction, keyPath, lev
 };
 
 /**
- * 根据键名列表获取匹配的过滤器列表
- * @param fitlerType
- * @param keys
- * @returns {{hasAsync: boolean, filters: Array}}
- */
-Gob.prototype.$_getFilterByKeys = function (fitlerType, keys) {
-    var keys = keys.slice(0);
-    if (fitlerType === "pre") {
-        var tragetFilters = this.$_entrails.fitlers.preFilters;
-    } else if (fitlerType === "fin") {
-        var tragetFilters = this.$_entrails.fitlers.finFilters;
-    }
-    var filters = [];
-    var hasAsync = false;
-    for (var i = 0; i < keys.length + 1; i++) {
-        var oncefilters = [];
-        var onceKeys = keys.slice(0, keys.length - i);
-        // console.info("scan filter:", onceKeys.concat(["__root"]))
-        var filtersOb = getObjectValueByKeys(tragetFilters, onceKeys.concat(["__root"]));
-        for (var x in filtersOb) {
-            if (filtersOb[x].isAsync) {
-                hasAsync = true;
-            }
-            oncefilters.push(filtersOb[x]);
-        }
-        oncefilters.sort(function (a, b) {
-            var result = b.level - a.level;
-            if (result === 0) {
-                var nameA = a.filterName.toUpperCase();
-                var nameB = b.filterName.toUpperCase();
-                if (nameA < nameB) {
-                    return -1;
-                }
-                if (nameA > nameB) {
-                    return 1;
-                }
-            }
-            return result;
-        });
-
-        filters = oncefilters.concat(filters);
-    }
-
-    return { hasAsync: hasAsync, filters: filters };
-};
-
-/**
- * 执行一个赋值命令
- * @param setInfo {keyPath, value,onlySet}
- * @returns {*}
- */
-Gob.prototype.$execSet = async function (setInfo, who) {
-    if (setInfo != undefined && setInfo.keyPath != undefined) {
-        var keys = keyPathToKeys(setInfo.keyPath);
-
-        if (setInfo.onlySet) {
-            var onlySet = setInfo.onlySet;
-        } else {
-            var onlySet = false;
-        }
-        await this.$setValue(keys, setInfo.value, who, onlySet);
-    }
-};
-
-/**
- * 执行一个取值命令
- * @param keyPath
- */
-Gob.prototype.$execGet = function (keyPath) {
-    if (keyPath) {
-        var keys = keyPathToKeys(keyPath);
-        return this.$getValue(keys);
-    }
-};
-
-Gob.prototype.$execUpdate = function (updateInfo, who) {
-    if (updateInfo != undefined && updateInfo.keyPath != undefined) {
-        var keys = keyPathToKeys(updateInfo.keyPath);
-        this.$updateValue(keys, updateInfo.value, who);
-    }
-};
-
-/**
- * 执行一个指令或指令集
+ * 执行一个指令或一个指令列表
  * @param Order
  */
-Gob.prototype.$exec = function (order) {
+Gob.prototype.$exec = async function (order) {
     if (__WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(order) === "array") {
         var orders = order;
     } else {
@@ -4272,23 +4236,15 @@ Gob.prototype.$exec = function (order) {
 
     for (var i = 0; i < orders.length; i++) {
         if (orders[i] != undefined && orders[i].order != undefined) {
-            if (__WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(orders[i].info) === "string") {
-                try {
-                    var info = JSON.parse(orders[i].info);
-                } catch (e) {
-                    console.error("[Gob] $exec ", orders[i], e);
-                    continue;
-                }
-            } else {
-                var info = orders[i].info;
-            }
 
             if (orders[i].order === "new") {
-                this.$newStates(keyPathToKeys(info.keyPath), info.value, order.who);
+                this.$newStates(keyPathToKeys(orders[i].keyPath), orders[i].value, orders[i].who);
+            } else if (orders[i].order === "delete") {
+                this.$deleteState(orders[i].keyPath, orders[i].who);
             } else if (orders[i].order === "set") {
-                this.$execSet(info, order.who);
+                await this.$setValue(orders[i].keyPath, orders[i].value, orders[i].who);
             } else if (orders[i].order === "update") {
-                this.$execUpdate(info, order.who);
+                this.$updateValue(orders[i].keyPath, orders[i].value, orders[i].who);
             }
         }
     }
@@ -4315,9 +4271,22 @@ Gob.prototype.$getValue = function (keyPath) {
 Gob.prototype.$setValue = async function (keyPath, value, who) {
     var keys = keyPathToKeys(keyPath);
     this.$_entrails.lastKeyPath = keys; //记录 keyPath
+    // console.log("$setValue", keys, value)
+
+
+    if (__WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(value) === "object" && who != "Gob") {
+        var ob = {};
+        ob[arrayLast(keys)] = value;
+        this.$deleteState(keys);
+
+        var tragetOb = getObjectValueByKeys(this, keys, 1);
+        keys.pop();
+        giveSetter(ob, keys, 0, this, tragetOb, "Gob");
+        return;
+    }
 
     var filterRope = {}; //过滤器间额外信息通信管道
-    // console.log("$setValue", keys, value)
+
     //0. 计数
     this.$_entrails.count.set++;
 
@@ -4329,7 +4298,7 @@ Gob.prototype.$setValue = async function (keyPath, value, who) {
     }
 
     // 1. 获取匹配的 preFilter 前过滤器
-    var filtersOb = this.$_getFilterByKeys("pre", keys);
+    var filtersOb = this.$getFilterByKeys("pre", keys);
     // console.log("$setValue filtersOb", keys, filtersOb)
     // console.log("hasAsync keys", keys, filtersOb.hasAsync)
 
@@ -4346,7 +4315,7 @@ Gob.prototype.$setValue = async function (keyPath, value, who) {
     }
 
     // 3. finFilter 最终过滤器
-    var finFiltersOb = this.$_getFilterByKeys("fin", keys);
+    var finFiltersOb = this.$getFilterByKeys("fin", keys);
 
     if (finFiltersOb.hasAsync) {
         for (var i = 0; i < finFiltersOb.filters.length; i++) {
@@ -4372,7 +4341,6 @@ Gob.prototype.$setValue = async function (keyPath, value, who) {
  * @param who
  */
 Gob.prototype.$updateValue = function (keyPath, value, who) {
-
     var keys = keyPathToKeys(keyPath);
     this.$_entrails.lastKeyPath = keys;
     var change = setObjectValueByKeys(this.$_entrails.states, keys, value, [], {}, this, who);
@@ -4392,9 +4360,10 @@ Gob.prototype.$deleteState = function (keyPath, who) {
     } else {
         deleteObjectValueByKeys(this, keys, 0);
     }
+    deleteObjectValueByKeys(this.$_entrails.states, keys, 0);
 
     if (this.$log.enableLog || this.$_entrails.enalbeRec) {
-        var order = { order: "del", who: who, keyPath: keys };
+        var order = { order: "delete", who: who, keyPath: keys };
         if (this.$log.enableLog) this.$log.list.push(order);
         if (this.$_entrails.enalbeRec) this.$_entrails.recs.push(order);
     }
@@ -4408,8 +4377,22 @@ Gob.prototype.$deleteState = function (keyPath, who) {
  */
 Gob.prototype.$newStates = function (object, value, who) {
 
-    if (__WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(object) === "array" && arguments.length >= 2) {
-        var object = keyPathToObject(object, value);
+    if (__WEBPACK_IMPORTED_MODULE_2__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(object) !== "object" && arguments.length >= 2) {
+        var keys = keyPathToKeys(object);
+        // object = this.$util.getObjectValueByKeys(object, keys, 1)
+        // if (object == undefined)
+        // {
+        //     console.log("object==undefined")
+        //     object = this
+        // }
+        // if (TYP.type(value) === "object")
+        // {
+        //     var newValue = {}
+        //     newValue[arrayLast(keys)] = value
+        //     var value = newValue
+        // }
+
+        object = keyPathToObject(keys, value);
         var thisWho = who;
     } else {
         var thisWho = value;
@@ -4467,7 +4450,7 @@ Gob.prototype.$util.applyModeState = function (object) {
  * @param keys
  * @returns {*}
  */
-Gob.prototype.$util.getModeStateValueByKeys = function (keys) {
+Gob.prototype.$getModeStateValueByKeys = function (keys) {
     return getObjectValueByKeys(this.$_entrails.modeData, keys);
 };
 
@@ -4499,6 +4482,7 @@ function giveSetter(object, keys, index, self, itr, who) {
         var newKeys = keys.concat(key);
         var isObject = false;
 
+        // console.log("typeof  self.$_entrails.hooks.OVERWRITE_newStateObject ",typeof  self.$_entrails.hooks.OVERWRITE_newStateObject )
         if (typeof self.$_entrails.hooks.OVERWRITE_newStateObject === "function") {
             self.$_entrails.hooks.OVERWRITE_newStateObject(itr, key, {}, keys);
         }
@@ -4754,6 +4738,13 @@ function isAsyncFunction(func) {
     return !!(str.match(/^async /) || str.match(/return _ref[^\.]*\.apply/));
 }
 
+function arrayLast(array, len) {
+    if (len == undefined) len = 0;
+    if (len >= array.length) len = array.length - 1;
+
+    return array[array.length - len - 1];
+}
+
 function createModeStates(data) {
     var states = {};
     var modeData = data;
@@ -4795,6 +4786,11 @@ function getObjectValueByKeys(object, keys, aheadEndTime) {
 
     var itr = object;
     var finTime = keys.length - (aheadEndTime || 0);
+
+    if (finTime === 0) {
+        return itr;
+    }
+
     for (var i = 0; i < finTime; i++) {
         if (i === finTime - 1) {
             return itr[keys[i]];
@@ -4836,7 +4832,7 @@ function deleteObjectValueByKeys(object, keys, aheadEndTime, deleteFunc) {
 //-----------------------------------------------------------
 
 
-Gob.prototype.sleep = async function (ms) {
+Gob.prototype.$util.sleep = async function (ms) {
     return new __WEBPACK_IMPORTED_MODULE_0_babel_runtime_core_js_promise___default.a(function (resolve, reject) {
         setTimeout(() => {
             resolve(ms);
@@ -4844,13 +4840,13 @@ Gob.prototype.sleep = async function (ms) {
     });
 };
 
-Gob.prototype.doAsync = async function () {
-    console.log("ssss1");
+Gob.prototype.$util.testAsync = async function () {
+    console.log("step1");
     var a = await this.sleep();
-    console.log("ssss2", a);
+    console.log("step2", a);
 };
 
-var propertySetting = { writable: false, enumerable: false };
+var propertySetting = { enumerable: false };
 
 Object.defineProperty(Gob.prototype, "$newStates", propertySetting);
 Object.defineProperty(Gob.prototype, "$setValue", propertySetting);
@@ -4858,14 +4854,11 @@ Object.defineProperty(Gob.prototype, "$getValue", propertySetting);
 Object.defineProperty(Gob.prototype, "$exec", propertySetting);
 Object.defineProperty(Gob.prototype, "$execSet", propertySetting);
 Object.defineProperty(Gob.prototype, "$execGet", propertySetting);
-Object.defineProperty(Gob.prototype, "$_getFilterByKeys", propertySetting);
-Object.defineProperty(Gob.prototype, "$addFilter", propertySetting);
+
 Object.defineProperty(Gob.prototype, "$addFilter", propertySetting);
 Object.defineProperty(Gob.prototype, "$removeFilter", propertySetting);
 Object.defineProperty(Gob.prototype, "$addFinFilter", propertySetting);
 Object.defineProperty(Gob.prototype, "$addPreFilter", propertySetting);
-Object.defineProperty(Gob.prototype, "doAsync", propertySetting);
-Object.defineProperty(Gob.prototype, "sleep", propertySetting);
 
 /* harmony default export */ __webpack_exports__["a"] = (Gob);
 
@@ -5076,14 +5069,14 @@ var SampleStates = {
 };
 
 var GobMode_base_init = function () {
-    this.$mode = "base";
+    this.$_entrails.mode = "base";
     this.$addFilter("pre", "type", pre_type, [], 9);
     this.$addFilter("pre", "range", pre_range, [], 10);
 };
 
 function pre_range(oldValue, finValue, keys, who, setterReturnInfo) {
 
-    var dataRange = this.$_getStateModeValueByKeys(keys.concat(["range"]));
+    var dataRange = this.$getModeStateValueByKeys(keys.concat(["range"]));
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2) {
         if (finValue > dataRange[1]) finValue = dataRange[1];
         if (finValue < dataRange[0]) finValue = dataRange[0];
@@ -5095,7 +5088,7 @@ function pre_range(oldValue, finValue, keys, who, setterReturnInfo) {
 
 function pre_type(oldValue, finValue, keys, who, setterReturnInfo) {
     // console.log("pre_type",oldValue, finValue, keys, who, setterReturnInfo)
-    var type = this.$_getStateModeValueByKeys(keys.concat(["type"]));
+    var type = this.$getModeStateValueByKeys(keys.concat(["type"]));
     if (type != undefined) {
         var finValueType = __WEBPACK_IMPORTED_MODULE_0__lib_Richang_JSEX_typeTYP_js__["a" /* default */].type(finValue);
         if (finValueType !== type) {
@@ -5117,8 +5110,10 @@ function pre_type(oldValue, finValue, keys, who, setterReturnInfo) {
         } else {
             return finValue;
         }
+
+        return oldValue;
     }
-    return oldValue;
+    return finValue;
 }
 
 /* harmony default export */ __webpack_exports__["a"] = (GobMode_base_init);
@@ -5142,16 +5137,17 @@ var GobMode_VueSupport_init = function (vue) {
     }
 
     function init(self) {
+        console.log("[Gob Mode:VueSupport]");
         //为新创建对象在 vue 上添加响应支持
-        self.$hooks.newState = function (object, key, value, keys) {
+        self.$_entrails.hooks.newState = function (object, key, value, keys) {
             Vue.util.defineReactive(object, key, value);
         };
 
-        self.$hooks.OVERWRITE_newStateObject = function (object, key, value, keys) {
+        self.$_entrails.hooks.OVERWRITE_newStateObject = function (object, key, value, keys) {
             Vue.set(object, key, value);
         };
 
-        self.$hooks.OVERWRITE_newStateObject = function (object, key) {
+        self.$_entrails.hooks.OVERWRITE_deleteState = function (object, key) {
             Vue.util.del(object, key);
         };
 

@@ -20,7 +20,7 @@ var SampleStates = {
 
 var GobMode_base_init = function ()
 {
-    this.$mode = "base"
+    this.$_entrails.mode = "base"
     this.$addFilter("pre", "type", pre_type, [], 9)
     this.$addFilter("pre", "range", pre_range, [], 10)
 
@@ -31,7 +31,7 @@ var GobMode_base_init = function ()
 function pre_range(oldValue, finValue, keys, who, setterReturnInfo)
 {
 
-    var dataRange = this.$_getStateModeValueByKeys(keys.concat(["range"]))
+    var dataRange = this.$getModeStateValueByKeys(keys.concat(["range"]))
     if (dataRange != undefined && dataRange.length != undefined && dataRange.length === 2)
     {
         if (finValue > dataRange[1]) finValue = dataRange[1];
@@ -45,7 +45,7 @@ function pre_range(oldValue, finValue, keys, who, setterReturnInfo)
 function pre_type(oldValue, finValue, keys, who, setterReturnInfo)
 {
     // console.log("pre_type",oldValue, finValue, keys, who, setterReturnInfo)
-    var type = this.$_getStateModeValueByKeys(keys.concat(["type"]))
+    var type = this.$getModeStateValueByKeys(keys.concat(["type"]))
     if (type != undefined)
     {
         var finValueType = TYP.type(finValue)
@@ -74,8 +74,10 @@ function pre_type(oldValue, finValue, keys, who, setterReturnInfo)
         {
             return finValue
         }
+
+        return oldValue
     }
-    return oldValue
+    return finValue
 }
 
 

@@ -85,8 +85,12 @@ test('设置新属性', t =>
     t.is(Gob.a.a2.a3aa, 445);
 
     Gob.$newStates(["a", "b", "c"], 999)
-
     t.is(Gob.a.b.c, 999);
+
+    Gob.a.a2.a3aa={t1:12345,t2:{tyy:123}}
+    t.is(Gob.a.a2.a3aa.t1, 12345);
+    t.is(Gob.a.a2.a3aa.t2.tyy, 123);
+
 
 
 });
@@ -208,20 +212,23 @@ test('异步过滤器', t =>
 });
 
 
-test('执行指令', t =>
-{
-    var Gob = new GOB()
-    var ordersJson = "[{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"d1\\\"],\\\"value\\\":22}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ds\\\"],\\\"value\\\":22}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ob2\\\",\\\"d2\\\"],\\\"value\\\":\\\"ddd\\\"}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ob2\\\",\\\"ob22\\\",\\\"d\\\"],\\\"value\\\":3324}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"ob\\\",\\\"d\\\"],\\\"value\\\":33}\"},{\"order\":\"new\",\"info\":\"{\\\"keyPath\\\":[\\\"a\\\",\\\"b\\\",\\\"c\\\"],\\\"value\\\":200}\"}]";
-    var orders = JSON.parse(ordersJson)
-    Gob.$exec(orders)
-    t.is(Gob.ob2.d2, "ddd");
-    t.is(Gob.ob2.ob22.d, 3324);
-    Gob.$exec({order: "new", info: {keyPath: ["tt", "tt2", "sd22"], value: 3322}})
-    t.is(Gob.tt.tt2.sd22, 3322);
-    Gob.tt.tt2.sd22 = "ddd"
-    t.is(Gob.tt.tt2.sd22, "ddd");
-
-});
+// test('执行指令', t =>
+// {
+//     var Gob = new GOB()
+//     var ordersJson =
+//
+//
+//
+//     var orders = JSON.parse(ordersJson)
+//     Gob.$exec(orders)
+//     t.is(Gob.ob2.d2, "ddd");
+//     t.is(Gob.ob2.ob22.d, 3324);
+//     Gob.$exec({order: "new", info: {keyPath: ["tt", "tt2", "sd22"], value: 3322}})
+//     t.is(Gob.tt.tt2.sd22, 3322);
+//     Gob.tt.tt2.sd22 = "ddd"
+//     t.is(Gob.tt.tt2.sd22, "ddd");
+//
+// });
 
 
 test('示例1', t =>

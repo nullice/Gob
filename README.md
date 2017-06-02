@@ -187,10 +187,10 @@ JSON.stringify(gob) // "{"text":{"fontSize":12}}"
 
 
 ### `gob.$newStates()`
-添加新状态到 Gob 对象。
+添加新状态到 Gob 对象。 
 
-- `gob.$newStates(object)`
-- `gob.$newStates(keyPath, value)`
+- `gob.$newStates(object [, who])`
+- `gob.$newStates(keyPath, value [, who])`
 
 ```js
 var gob = new GOB()
@@ -210,8 +210,37 @@ JSON.stringify(gob) //"{"text":{"color":{"r":123,"g":255,"b":234}}}"
 gob.$newStates(["text","fontSize"], 24)
 JSON.stringify(gob) //"{"text":{"fontSize":24,"color":{"r":123,"g":255,"b":234}}}"
 
+```
+
+
+### `gob.$deleteState()`
+删除 Gob 对象中的一个状态。
+
+相当于 `delete gob.someting`
+
+- `gob.$deleteState(keyPath [, who])`
+
+```js
+var gob = new GOB({text:{fontSize:12}})
+
+gob.$deleteState(["text","fontSize"])
+JSON.stringify(gob) //"{"text":{}}"
 
 ```
 
 
 
+
+### `gob.$setValue()`
+为 Gob 对象中的状态赋值。
+相当于 `gob.someting = value`
+
+- `gob.$setValue(keyPath, value [, who])`
+
+```js
+var gob = new GOB({text:{fontSize:12}})
+
+gob.$deleteState(["text","fontSize"])
+JSON.stringify(gob) //"{"text":{}}"
+
+```

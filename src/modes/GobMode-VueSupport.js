@@ -17,21 +17,22 @@ var GobMode_VueSupport_init = function (vue)
 
     function init(self)
     {
+        console.log("[Gob Mode:VueSupport]")
         //为新创建对象在 vue 上添加响应支持
-        self.$hooks.newState =
+        self.$_entrails.hooks.newState =
             function (object, key, value, keys)
             {
                 Vue.util.defineReactive(object, key, value,)
             }
 
-        self.$hooks.OVERWRITE_newStateObject =
+        self.$_entrails.hooks.OVERWRITE_newStateObject =
             function (object, key, value, keys)
             {
                 Vue.set(object, key, value)
             }
 
 
-        self.$hooks.OVERWRITE_newStateObject = function (object, key)
+        self.$_entrails.hooks.OVERWRITE_deleteState = function (object, key)
         {
             Vue.util.del(object, key)
         }
