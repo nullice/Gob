@@ -20,7 +20,6 @@
 <div>----</div>
 
 
-
 <pre><code>{{gg|json 4}}</code></pre>
 <input type="text" v-model="   gg.int">
 <div>----</div>
@@ -39,7 +38,7 @@
                 b: {type: "number", default: 222, range: [0, 255]},
             },
             fontSize: {type: "number", default: 32, range: [12, 72]},
-            int:11
+            int: 11
         }
 
 //        text: {color: {
@@ -56,15 +55,15 @@
 
     var gg = {}
 
-    Object.defineProperty(gg, "int",{
-        set:function (value)
+    Object.defineProperty(gg, "int", {
+        set: function (value)
         {
-            this._int =value
-            console.log("gg:",value)
+            this._int = value
+            console.log("gg:", value)
         },
-        get:function ()
+        get: function ()
         {
-            return  this._int
+            return this._int
 
         },
         enumerable: true,
@@ -72,15 +71,14 @@
     });
 
 
-
-gg.int =11
+    gg.int = 11
 
     var vue = new Vue({
 
         el: "body",
         data: {
             vGob: Gob,
-            gg:gg
+            gg: gg
         }
     })
 
@@ -88,17 +86,16 @@ gg.int =11
 
 
     //
-//    console.log(Gob.$_states)
+    //    console.log(Gob.$_states)
 
     Vue.nextTick(
-    function ()
-    {
-        Gob.text.color.r = 333
-        console.log(" Gob.text.color.r", Gob.text.color.r)
-        Gob.text.color.r={a:123}
-        Gob.text.color.r.a=777
-
-    }
+        function ()
+        {
+            Gob.text.color.r = 333
+            console.log(" Gob.text.color.r", Gob.text.color.r)
+            Gob.text.color.r = {a: 123}
+            Gob.text.color.r.a = 777
+        }
     )
 
 
