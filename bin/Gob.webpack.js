@@ -4027,7 +4027,9 @@ var Gob = function (initalStates) {
     this.$_entrails.recs = []; //存储录制的状态改变动作
     this.$_entrails.lastKeyPath = null; //最后一次使用的 KetPath
     this.$_entrails.mode = "normal"; //当前模式
+
     this.$_entrails.fitlers = {
+        filterCount: 0, /*过滤器计数*/
         preFilters: { __root: {} },
         finFilters: { __root: {} }
     };
@@ -4090,14 +4092,7 @@ Gob.prototype.$getFilterByKeys = function (fitlerType, keys) {
         oncefilters.sort(function (a, b) {
             var result = b.level - a.level;
             if (result === 0) {
-                var nameA = a.filterName.toUpperCase();
-                var nameB = b.filterName.toUpperCase();
-                if (nameA < nameB) {
-                    return -1;
-                }
-                if (nameA > nameB) {
-                    return 1;
-                }
+                return a.index > a.index;
             }
             return result;
         });
@@ -4151,6 +4146,7 @@ Gob.prototype.$addFilter = function (fitlerType, filterName, filterFunction, key
     }
     __WEBPACK_IMPORTED_MODULE_3__lib_Richang_JSEX_objectOBJ_js__["a" /* default */].setObjectValueByNames(tragetFilters, keys.concat(["__root", filterName]), {
         filterName: filterName, /*过滤器名*/
+        index: this.$_entrails.fitlers.filterCount++, /*索引顺序*/
         func: filterFunction, /*函数*/
         isAsync: isAsync, /*是否是异步函数*/
         level: level });
