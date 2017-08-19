@@ -56,7 +56,7 @@ var Gob = function (initalStates)
     // 构造函数
     if (typeof  initalStates === "object")
     {
-        this.$newStates(initalStates)
+        this.$new(initalStates)
     }
     var self = this
     return this;
@@ -285,7 +285,7 @@ Gob.prototype.$exec = async function (order)
 
             if (orders[i].order === "new")
             {
-                this.$newStates(keyPathToKeys(orders[i].keyPath), orders[i].value, orders[i].who)
+                this.$new(keyPathToKeys(orders[i].keyPath), orders[i].value, orders[i].who)
             }
             else if (orders[i].order === "delete")
             {
@@ -451,29 +451,16 @@ Gob.prototype.$deleteState = function (keyPath, who)
 
 /**
  * 添加新状态
- * $newStates({a:{b:100}}) 或 $newStates(["a","b"],100)
+ * $new({a:{b:100}}) 或 $new(["a","b"],100)
  * @param object
  * @param value
  */
-Gob.prototype.$newStates = function (object, value, who)
+Gob.prototype.$new = function (object, value, who)
 {
 
     if (TYP.type(object) !== "object" && arguments.length >= 2)
     {
         var keys = keyPathToKeys(object)
-        // object = this.$util.getObjectValueByKeys(object, keys, 1)
-        // if (object == undefined)
-        // {
-        //     console.log("object==undefined")
-        //     object = this
-        // }
-        // if (TYP.type(value) === "object")
-        // {
-        //     var newValue = {}
-        //     newValue[arrayLast(keys)] = value
-        //     var value = newValue
-        // }
-
         object = keyPathToObject(keys, value)
         var thisWho = who
     } else
@@ -534,7 +521,7 @@ Gob.prototype.$recEnd = function ()
 Gob.prototype.$util.applyModeState = function (object)
 {
     var ob = createModeStates(object)
-    this.$newStates(ob.states)
+    this.$new(ob.states)
     this.$_entrails.modeData = ob.modeData
 
 }

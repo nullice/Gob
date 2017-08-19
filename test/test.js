@@ -11,7 +11,7 @@ import GOB from './../bin/Gob.umd.js';
 test('创建属性', t =>
 {
     var Gob = new GOB()
-    Gob.$newStates({d1: 22, ds: 22})
+    Gob.$new({d1: 22, ds: 22})
     t.is(Gob.d1, 22);
     t.is(Gob.ds, 22);
 
@@ -21,7 +21,7 @@ test('创建属性', t =>
 test('创建对象属性', t =>
 {
     var Gob = new GOB()
-    Gob.$newStates({
+    Gob.$new({
         a: {
             a2: {a3: 333},
             a222: 222
@@ -37,7 +37,7 @@ test('创建对象属性', t =>
 test('设置属性', t =>
 {
     var Gob = new GOB()
-    Gob.$newStates({
+    Gob.$new({
         a: {
             a2: {a3: 333},
             a222: 222
@@ -66,7 +66,7 @@ test('设置属性', t =>
 test('设置新属性', t =>
 {
     var Gob = new GOB()
-    Gob.$newStates({
+    Gob.$new({
         a: {
             a2: {a3: 333},
             a222: 222
@@ -74,7 +74,7 @@ test('设置新属性', t =>
         b: {b2: {b3: 444}}
     })
 
-    Gob.$newStates({
+    Gob.$new({
         a: {
             a2: {a3aa: 666},
         }
@@ -84,7 +84,7 @@ test('设置新属性', t =>
     Gob.a.a2.a3aa = 445
     t.is(Gob.a.a2.a3aa, 445);
 
-    Gob.$newStates(["a", "b", "c"], 999)
+    Gob.$new(["a", "b", "c"], 999)
     t.is(Gob.a.b.c, 999);
 
     Gob.a.a2.a3aa={t1:12345,t2:{tyy:123}}
@@ -99,7 +99,7 @@ test('设置新属性', t =>
 test('同步过滤器', t =>
 {
     var Gob = new GOB()
-    Gob.$newStates({
+    Gob.$new({
         ui: {
             windowA: true,
             windowB: false,
@@ -177,7 +177,7 @@ test('同步过滤器', t =>
 test('异步过滤器', t =>
 {
     var Gob = new GOB()
-    Gob.$newStates({
+    Gob.$new({
         ui: {
             windowA: true,
             windowB: false,
@@ -234,7 +234,7 @@ test('异步过滤器', t =>
 test('示例1', t =>
 {
     var Gob = new GOB()
-    Gob.$newStates({
+    Gob.$new({
         text: {fontSize: 14}
     })
     Gob.text.fontSize = 24;
