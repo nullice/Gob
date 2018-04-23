@@ -1,6 +1,7 @@
 // Created by nullice on 2018/04/17 - 17:55 
 
 import newGob from "./../../dist/Gob.umd.js"
+
 var Gob = newGob
 const GOB_CORE_NAME = "[Gob Core]"
 
@@ -91,32 +92,25 @@ describe("Set Cycle object", () =>
     gob.b = "b"
     gob.c = "c"
 
-    test("Cycle object", () =>
+    test("Simple cycle object", () =>
     {
-
         var obA = {name: "obA"}
         var obB = {name: "obB"}
 
         obA.toB = obB
         obB.toA = obA
-
         gob.obA = obA
 
-
-        expect(gob.obA.name ).toBe("obA")
-        expect(gob.obA.toB.name ).toBe( "obB")
-        expect(gob.obA.toB.toA.name ).toBe( "obA")
-        expect(gob.obA.toB.toA.toB.name ).toBe( "obB")
-        expect(gob.obA.toB.toA.toB.toA.name ).toBe( "obA")
-        expect(gob.obA.toB.toA.toB.toA.toB.name ).toBe( "obB")
-        expect(gob.obA.toB.toA.toB.toA.toB.toA.name ).toBe( "obA")
-        expect(gob.obA.toB.toA.toB.toA.toB.toA.toB.name ).toBe( "obB")
-        expect(gob.obA.toB.toA.toB.toA.toB.toA.toB ).toBe( gob.obA.toB.toA.toB.toA.toB)
-        expect(gob.obA.toB.toA.toB.toA ).toBe( gob.obA)
-
-
-
-
+        expect(gob.obA.name).toBe("obA")
+        expect(gob.obA.toB.name).toBe("obB")
+        expect(gob.obA.toB.toA.name).toBe("obA")
+        expect(gob.obA.toB.toA.toB.name).toBe("obB")
+        expect(gob.obA.toB.toA.toB.toA.name).toBe("obA")
+        expect(gob.obA.toB.toA.toB.toA.toB.name).toBe("obB")
+        expect(gob.obA.toB.toA.toB.toA.toB.toA.name).toBe("obA")
+        expect(gob.obA.toB.toA.toB.toA.toB.toA.toB.name).toBe("obB")
+        expect(gob.obA.toB.toA.toB.toA.toB.toA.toB).toBe(gob.obA.toB.toA.toB.toA.toB)
+        expect(gob.obA.toB.toA.toB.toA).toBe(gob.obA)
 
 
         expect(gob.a).toBe("a")
@@ -124,5 +118,42 @@ describe("Set Cycle object", () =>
         expect(gob.c).toBe("c")
     })
 
+    test("Complex cycle object", () =>
+    {
+        var ob = {
+            name: "ob",
+            info: {
+                name: "info",
+                info2: {
+                    name: "info2",
+                    info3: {
+                        name: "info3",
 
+                    },
+                    info4: {
+                        name: "info4"
+                    }
+                },
+            }
+        }
+
+        ob.info.info2.info3.toInfo4 = ob.info.info2.info4
+        ob.info.info2.info4.toInfo3 = ob.info.info2.info3
+        ob.info.info2.info4.toInfo = ob.info
+        ob.info.info2.info3.toInfo = ob.info
+        ob.info.info2.info4.toInfo2 = ob.info2
+        ob.info.info2.info3.toInfo2 = ob.info2
+
+
+        expect(ob.info.info2.info3.toInfo4.name).toBe("info4")
+        expect(ob.info.info2.info4.toInfo3.name).toBe("info3")
+        expect(ob.info.info2.info4.toInfo.name).toBe("info")
+        expect(ob.info.info2.info3.toInfo.name).toBe("info")
+        expect(ob.info.info2.info3.toInfo.info2.name).toBe("info2")
+        expect(ob.info.info2.info3.toInfo.info2.info4.toInfo3.name).toBe("info3")
+        expect(ob.info.info2.info3.toInfo.info2.info4.toInfo3.toInfo4.toInfo.name).toBe("info")
+        expect(ob.info.info2.info3.toInfo.info2.info4.toInfo3.toInfo4.toInfo).toBe(ob.info)
+
+
+    })
 })

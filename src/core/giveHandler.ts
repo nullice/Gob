@@ -28,14 +28,11 @@ function giveHandler(loaclData: any, localGate: any, fullPath: string[], state: 
     return {
         "set": function (target: any, key: any, value: any)
         {
-
-
             // 处理特殊属性 [Gob Core]
             if (key == state.GOB_CORE_NAME)
             {
                 return true
             }
-            let localPath: string[] = []
             let nowFullPath = [...fullPath, key]
             console.log("[set]", "fullPath:", nowFullPath, {key, target, value})
 
@@ -57,53 +54,58 @@ function giveHandler(loaclData: any, localGate: any, fullPath: string[], state: 
                     {
                         creatGate(item, [key, ...path], [...nowFullPath, ...path])
                     }
-                }, (object: Object, path: string[], cyclePath: string[]) =>
-                {
-                    console.log("  [cycle]", object, path, cyclePath)
-
-                    let cycleObject !: Object | undefined
-                    if (cyclePath.length == 0)
-                    {
-                        cycleObject = localGate[key]
-                    }
-                    else
-                    {
-                        cycleObject = rcObject.getObjectValueByNames(localGate, [key, cyclePath], null)
-                    }
-
-                    console.log("  [cycle cycleObject]", cycleObject)
-                    rcObject.setObjectValueByNames(localGate, [key, ...path], cycleObject)
-                })
-
-
-                /**
-                 * 在这个 Handler 的 localData 上根据 localPath 设置 Gate
-                 * @param {object} localData
-                 * @param {string[]} targetPath
-                 * @param {string[]} fullPath
-                 * @returns {any}
-                 */
-                function creatGate(localData: object, targetPath: string[], fullPath: string[]): any
-                {
-                    console.log("  [creatGate] key:", key, "fullPath", nowFullPath, {targetPath, localGate})
-
-                    let gate: Gate = {}
-                    let proxy = new Proxy(localData, giveHandler(localData, gate, fullPath, state))
-                    gate[GATE_PROXY_NAME] = proxy
-
-                    rcObject.setObjectValueByNames(localGate, targetPath, gate)
-
-                    return gate
-                }
-
+                }, creatCycleGate)
             }
             else
             {
                 loaclData[key] = value
             }
 
-
             return true
+
+
+            /**
+             * 为循环引用创建 Gate
+             * @param {Object} object 循环引用对象
+             * @param {string[]} path 发生循环引用的对象的 path
+             * @param {string[]} cyclePath 循环引用目标的 path
+             */
+            function creatCycleGate(object: Object, path: string[], cyclePath: string[])
+            {
+                // console.log("  [cycle]", object, path, cyclePath)
+                let cycleObject !: Object | undefined
+                if (cyclePath.length == 0)
+                {
+                    cycleObject = localGate[key]
+                }
+                else
+                {
+                    cycleObject = rcObject.getObjectValueByNames(localGate, [key, cyclePath], null)
+                }
+                // console.log("  [cycle cycleObject]", cycleObject)
+                rcObject.setObjectValueByNames(localGate, [key, ...path], cycleObject)
+            }
+
+
+            /**
+             * 在这个 Handler 的 localData 上根据 localPath 设置 Gate
+             * @param {object} localData
+             * @param {string[]} targetPath
+             * @param {string[]} fullPath
+             * @returns {any}
+             */
+            function creatGate(localData: object, targetPath: string[], fullPath: string[]): any
+            {
+                console.log("  [creatGate] key:", key, "fullPath", nowFullPath, {targetPath, localGate})
+
+                let gate: Gate = {}
+                let proxy = new Proxy(localData, giveHandler(localData, gate, fullPath, state))
+                gate[GATE_PROXY_NAME] = proxy
+
+                rcObject.setObjectValueByNames(localGate, targetPath, gate)
+
+                return gate
+            }
         },
         "get": function (target: any, key: any)
         {
