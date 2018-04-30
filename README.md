@@ -1,3 +1,7 @@
+
+> NEW 使用 TypeScript 和 Proxy 重构 Gob3 在 Gob3 分支（尚未完成）
+
+
 <p align="center">
   <img  src ="https://github.com/nullice/Gob/raw/master/logo/logo-200.png" />
 </p>
