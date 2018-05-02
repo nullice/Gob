@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "rollup -c -w",
     "build": "rollup -c",
-    "build-all": "rmdir-cli dist && rmdir-cli temp  && npm run build && npm run build-bundle",
+    "build-all": "rmdir-cli dist && rmdir-cli temp  && npm run build ",
     "build-ts": "tsc src/index.ts -d -m commonjs --outDir dist/ts ",
     "build-bundle": "webpack --verbose --mode=production",
     "build-and-publish": "npm run build-all && npm run doc && npm run publish",
