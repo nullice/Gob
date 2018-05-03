@@ -7,17 +7,68 @@
     <script src="./Richang.js"></script>
 
     <style>
-        body{
+        body {
             padding: 100px;
             text-align: center;
             font-size: 22px;
         }
 
     </style>
+
+
 </head>
 <body>
-        <div>引入了 /dist/Gob.bundle-web.js </div>
-        (0_0) 打开控制台调试吧2
+<div>引入了 /dist/Gob.bundle-web.js</div>
+(0_0) 打开控制台调试吧2
+
+
+<div id="app">
+
+    <h3>gob</h3>
+    <pre><code class="language-json"> {{a}}</code></pre>
+
+    <h3>changes log</h3>
+
+    <div class="stimuli" v-for="x in changes">
+        <span class="type">{{x.type}}</span>
+        <span class="path">{{x.path}}</span>
+        <span class="origin">{{x.origin}}</span>
+        <span class="info">{{x.info}}</span>
+    </div>
+
+    <h3>changes</h3>
+    <pre><code class="language-json"> {{changes}}</code></pre>
+</div>
+
+<script>
+
+    a = Gob()
+    a.x = {a: {b: 123}}
+    aG = Gob.inspect(a)
+
+
+    var app = new Vue({
+        el: "#app",
+        data: {
+            gob: a,
+            changes: aG.stimuliBus.stimuliLog.changes
+
+        },
+        mounted()
+        {
+
+            this.$nextTick(() =>
+            {
+
+
+            })
+
+        }
+    })
+
+
+</script>
+
 
 </body>
 </html>
