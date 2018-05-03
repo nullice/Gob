@@ -157,3 +157,31 @@ describe("Set Cycle object", () =>
 
     })
 })
+
+
+describe("Delete ", () =>
+{
+    let gob = newGob()
+
+    test("Delete object", () =>
+    {
+        gob.obA = {
+            apple: {
+                type: "水果",
+                length: 32
+            },
+
+        }
+        gob.obB = {a: {v: 13}}
+        expect(gob.obA.apple.type).toBe("水果")
+        expect(gob.obA.apple.length).toBe(32)
+        expect(gob.obA.apple.length).toBe(32)
+        expect(gob.obB.a.v).toBe(13)
+        delete  gob.obA.apple.type
+        delete  gob.obA.apple.length
+        expect(gob.obA.apple.type).toBe(undefined)
+        expect(gob.obA.apple.length).toBe(undefined)
+        expect(typeof  gob.obA.apple).toBe("object")
+    })
+
+})

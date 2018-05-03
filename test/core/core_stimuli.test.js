@@ -37,6 +37,33 @@ describe("$get, $set", () =>
             expect(gob.$get("e.a.b")).toBe(undefined)
         }
     )
+
+    test("$delete", () =>
+    {
+        let gob = Gob()
+        gob.obA = {
+            apple: {
+                type: "水果",
+                length: 32
+            },
+        }
+
+        gob.obB = {a: {v: 13}}
+        expect(gob.obA.apple.type).toBe("水果")
+        expect(gob.obA.apple.length).toBe(32)
+        expect(gob.obB.a.v).toBe(13)
+
+        gob.$delete("obA.apple.type")
+        gob.$delete("obA.apple.length")
+        gob.$delete(["obA", "apple", "type"])
+        gob.$delete("obB")
+
+        expect(gob.obA.apple.type).toBe(undefined)
+        expect(gob.obA.apple.length).toBe(undefined)
+        expect(typeof  gob.obA.apple).toBe("object")
+        expect(typeof  gob.obB).toBe("undefined")
+    })
+
 })
 
 describe("StimuliBus Log", () =>
@@ -102,4 +129,38 @@ describe("StimuliBus Log", () =>
         }
     )
 
+
+    test("getLatestStimuliSign raw delete", () =>
+        {
+            gob.o.a.b = 123
+            delete gob.o.a.b
+            var sign = core.stimuliBus.getLatestStimuliSign()
+            expect(sign.type).toBe("delete")
+            expect(gob.o.a.b).toBe(undefined)
+            expect(sign.path).toEqual(["o", "a", "b"])
+        }
+    )
+
+    test("stimuliLog.indexes", () =>
+        {
+            expect(core.stimuliBus.stimuliLog.indexes.set).toBe(2)
+            expect(core.stimuliBus.stimuliLog.indexes.delete).toBe(1)
+        }
+    )
+    test("getLatestStimuliSign $set", () =>
+        {
+            gob.o.a.b = 444
+            gob.$delete("o.a.b")
+            var sign = core.stimuliBus.getLatestStimuliSign()
+            expect(sign.type).toBe("delete")
+            expect(gob.o.a.b).toBe(undefined)
+            expect(sign.path).toEqual(["o", "a", "b"])
+        }
+    )
+    test("stimuliLog.indexes", () =>
+        {
+            expect(core.stimuliBus.stimuliLog.indexes.set).toBe(3)
+            expect(core.stimuliBus.stimuliLog.indexes.delete).toBe(2)
+        }
+    )
 })

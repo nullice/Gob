@@ -4,6 +4,9 @@ import {Type as rcType, Object as rcObject} from "richang.js/dist/RichangEs.js"
 import {GobState} from "@/core/giveHandler"
 import set from "./set"
 import get from "./get"
+import del from "./delete"
+import IgnoreSideEffect from "./ignore-side-effect"
+
 import {GobCore} from "@/core/index"
 
 export interface HandlerContext
@@ -79,7 +82,13 @@ class StimuliBus
         // 记录上下文
         if (handlerContext)
         {
-            this.recordStimuli(stimuliType, path, value, origin)
+
+            if (!IgnoreSideEffect(stimuliType, path, handlerContext))
+            {
+                // console.log("Ignore IgnoreSideEffect", handlerContext)
+                this.recordStimuli(stimuliType, path, value, origin)
+            }
+
         }
 
         switch (stimuliType)
@@ -107,10 +116,20 @@ class StimuliBus
                     return set(path, value, path[path.length - 1], handlerContext)
                 }
             }
+            case "delete":
+            {
+                if (!handlerContext)
+                {
+                    return rcObject.deleteObjectValueByNames(this.gobCore.proxy, path)
+                }
+                else
+                {
+                    return del(path, value, path[path.length - 1], handlerContext)
+                }
+            }
 
             default:
             {
-
             }
         }
     }
@@ -173,7 +192,6 @@ class StimuliBus
             // 异步记录
             setTimeout(logFunc, 0)
         }
-
 
     }
 

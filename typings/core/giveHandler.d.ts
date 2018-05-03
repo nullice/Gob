@@ -26,5 +26,6 @@ export interface HandlerContext {
 declare function giveHandler(loaclData: any, localGate: any, fullPath: string[], state: GobState): {
     "set": (target: any, key: any, value: any) => any;
     "get": (target: any, key: any) => any;
+    "deleteProperty": (target: any, key: any) => any;
 };
 export default giveHandler;

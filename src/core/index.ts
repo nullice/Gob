@@ -3,11 +3,14 @@
 import giveHandler from "./giveHandler"
 import StimuliBus from "./StimuliBus/index"
 import {inspect} from "util"
-
 import cloneDeep from "lodash/cloneDeep"
-
 const GOB_CORE_NAME = "[Gob Core]"
 
+
+/*
+*
+*    GobFactory(state) =>  gob instance = GobProxy: {GobCore + state }
+* */
 
 export class GobCore
 {
@@ -44,6 +47,7 @@ export interface GobProxy
 {
     ["[Gob Core]"]?: GobCore,
     $get?: (path: string | string[]) => any,
+    $set?: (path: string | string[], value: any) => Boolean,
 
     [propName: string]: any;
 }
@@ -56,6 +60,9 @@ interface GobFactory
         options: GobOptions,
         cloneDeep: Function,
     }
+    GOB_CORE_NAME: string,
+    inspect: Function
+
 }
 
 let GobFactory = <GobFactory> function (this: any, object: any, options?: object): GobProxy
@@ -88,40 +95,33 @@ let GobFactory = <GobFactory> function (this: any, object: any, options?: object
 
 
 // GobFactory 提供的默认设置
-
 GobFactory.default = {
     options: {},
     cloneDeep: cloneDeep
 }
 
+// 注册一些方法和常量到 Gob
+GobFactory.GOB_CORE_NAME = GOB_CORE_NAME
+
 /**
- * 注册一些方法和常量到 Gob
+ * 检查一个 gob 实例的 Core
+ * @param gob
+ * @returns {any}
  */
-Object.assign(GobFactory,
+GobFactory.inspect = function (gob: any): GobCore
+{
+
+    let core = gob[GOB_CORE_NAME]
+    if (core)
     {
-        KEY: GOB_CORE_NAME,
-        GOB_CORE_NAME,
-        /**
-         * 检查一个 gob 实例的 Core
-         * @param gob
-         * @returns {any}
-         */
-        inspect: function (gob: any)
-        {
-
-            let core = gob[GOB_CORE_NAME]
-            if (core)
-            {
-                return gob[GOB_CORE_NAME]
-            }
-            else
-            {
-                throw Error("Gob.inspect: param is not Gob3 Instance")
-
-            }
-        }
+        return gob[GOB_CORE_NAME]
     }
-)
+    else
+    {
+        throw Error("Gob.inspect: param is not Gob3 Instance. :" + gob)
+
+    }
+}
 
 
 export default GobFactory

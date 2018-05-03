@@ -60,23 +60,28 @@ function giveHandler(loaclData: any, localGate: any, fullPath: string[], state: 
                 return state.gobCore
             }
 
-            if (key == "$get")
-            {
-                return $get
-            }
-            if (key == "$set")
-            {
-                return $set
-            }
+            if (key == "$get") return $get
+            if (key == "$set") return $set
+            if (key == "$delete") return $delete
+
 
             let nowFullPath = [...fullPath, key]
             let handlerContext = {loaclData, localGate, state}
             return state.gobCore.stimuliBus.receptor("get", nowFullPath, undefined, null, handlerContext)
         },
-        "deleteProperty": function (target: any, prop: any)
+        "deleteProperty": function (target: any, key: any)
         {
-            console.log("called: " + prop)
-            return true
+
+            // 处理特殊属性 [Gob Core]
+            if (key == state.GOB_CORE_NAME)
+            {
+                return true
+            }
+            console.log("called: " + key)
+            let nowFullPath = [...fullPath, key]
+            let handlerContext = {loaclData, localGate, state}
+            return state.gobCore.stimuliBus.receptor("delete", nowFullPath, null, null, handlerContext)
+
         }
     }
 
@@ -97,6 +102,13 @@ function giveHandler(loaclData: any, localGate: any, fullPath: string[], state: 
         return state.gobCore.stimuliBus.receptor("set", nowFullPath, value, origin)
     }
 
+    function $delete(inPath: string[], origin: object | string | null = null)
+    {
+        let path = normalizePath(inPath)
+        let nowFullPath = [...fullPath, ...path]
+        console.log("$delete", nowFullPath)
+        return state.gobCore.stimuliBus.receptor("delete", nowFullPath, undefined, origin)
+    }
 }
 
 

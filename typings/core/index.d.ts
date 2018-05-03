@@ -17,6 +17,7 @@ export interface GobOptions {
 export interface GobProxy {
     ["[Gob Core]"]?: GobCore;
     $get?: (path: string | string[]) => any;
+    $set?: (path: string | string[], value: any) => Boolean;
     [propName: string]: any;
 }
 interface GobFactory {
@@ -25,6 +26,8 @@ interface GobFactory {
         options: GobOptions;
         cloneDeep: Function;
     };
+    GOB_CORE_NAME: string;
+    inspect: Function;
 }
 declare let GobFactory: GobFactory;
 export default GobFactory;
