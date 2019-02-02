@@ -6,3 +6,4 @@ temp
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
+.nyc_output
